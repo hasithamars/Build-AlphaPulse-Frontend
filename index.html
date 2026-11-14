@@ -34,19 +34,21 @@ header{flex-shrink:0;border-bottom:1px solid var(--border);background:rgba(2,6,2
   background:rgba(15,23,42,.6);border:1px solid var(--border);font-size:11px;font-family:'SF Mono',monospace}
 .price{font-size:22px;font-weight:700;font-family:'SF Mono',monospace;letter-spacing:-.02em;transition:color .3s}
 .change{font-size:12px;font-family:'SF Mono',monospace;font-weight:600}
-.tf-group{display:flex;gap:2px;padding:2px;background:rgba(15,23,42,.6);border:1px solid var(--border);border-radius:8px}
-.tf-btn{padding:4px 10px;font-size:11px;font-family:'SF Mono',monospace;border-radius:5px;color:var(--muted)}
-.tf-btn.active{background:rgba(16,185,129,.15);color:#34d399}
-.tf-btn:hover:not(.active){color:#cbd5e1}
 .bias-badge{display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;
   border:1px solid;font-size:10px;font-family:'SF Mono',monospace;letter-spacing:.1em;font-weight:700}
 .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 .live-dot{animation:pulse 1.6s infinite}
 
+/* tab navigation */
+.tab-nav{display:flex;gap:2px;padding:2px;background:rgba(15,23,42,.6);border:1px solid var(--border);border-radius:8px;margin-left:10px}
+.tab-btn{padding:6px 16px;font-size:11px;font-family:'SF Mono',monospace;border-radius:5px;color:var(--muted);font-weight:600;transition:all .2s}
+.tab-btn.active{background:rgba(99,102,241,.2);color:#a5b4fc;border:1px solid rgba(99,102,241,.4)}
+.tab-btn:hover:not(.active){color:#cbd5e1}
+
 /* layout */
-main{flex:1;display:flex;overflow:hidden}
-aside.wl{width:190px;flex-shrink:0;border-right:1px solid var(--border);overflow-y:auto;background:rgba(2,6,23,.6)}
+main{flex:1;display:flex;overflow:hidden;position:relative}
+aside.wl{width:190px;flex-shrink:0;border-right:1px solid var(--border);overflow-y:auto;background:rgba(2,6,23,.6);z-index:5}
 .wl-header{padding:12px 16px;border-bottom:1px solid var(--border)}
 .wl-title{font-size:9px;letter-spacing:.2em;color:var(--muted);font-family:'SF Mono',monospace;text-transform:uppercase}
 .wl-sub{font-size:12px;font-weight:600;margin-top:2px}
@@ -58,9 +60,13 @@ aside.wl{width:190px;flex-shrink:0;border-right:1px solid var(--border);overflow
 .wl-item:hover{background:rgba(30,41,59,.5);color:#cbd5e1}
 .wl-item.active{background:rgba(16,185,129,.1);color:#34d399;border-left-color:#10b981}
 
-/* center */
-.center{flex:1;display:flex;flex-direction:column;padding:14px;gap:12px;overflow:hidden;min-width:0}
-.chart-card{display:flex;flex-direction:column;overflow:hidden;height:360px;flex-shrink:0}
+/* Views */
+.view{flex:1;display:flex;overflow:hidden;width:100%}
+.view.hidden{display:none}
+
+/* Terminal View */
+.center{flex:1;display:flex;flex-direction:column;padding:14px;gap:12px;overflow-y:auto;min-width:0}
+.chart-card{display:flex;flex-direction:column;overflow:hidden;height:400px;flex-shrink:0}
 .chart-header{flex-shrink:0;display:flex;justify-content:space-between;align-items:center;
   padding:8px 14px;border-bottom:1px solid var(--border);font-size:11px;font-family:'SF Mono',monospace}
 .chart-body{flex:1;position:relative;overflow:hidden}
@@ -68,19 +74,30 @@ aside.wl{width:190px;flex-shrink:0;border-right:1px solid var(--border);overflow
 .tv-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   color:var(--muted);font-size:12px;font-family:'SF Mono',monospace}
 
-/* footprint */
-.fp-card{padding:10px 12px;flex-shrink:0;display:flex;flex-direction:column;gap:8px}
-.fp-header{display:flex;justify-content:space-between;align-items:center}
-.fp-title{font-size:9px;letter-spacing:.2em;color:var(--muted);font-family:'SF Mono',monospace;text-transform:uppercase}
-.fp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.fp-box{padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:rgba(15,23,42,.6);text-align:center}
-.fp-label{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-family:'SF Mono',monospace}
-.fp-val{font-size:12px;font-weight:700;font-family:'SF Mono',monospace;margin-top:2px}
-.fp-up{color:#34d399}
-.fp-down{color:#f87171}
-.fp-neutral{color:#fbbf24}
+.proj-card{padding:10px 12px;flex-shrink:0}
+.proj-title{font-size:9px;letter-spacing:.2em;color:var(--muted);font-family:'SF Mono',monospace;
+  text-transform:uppercase;margin-bottom:8px;display:flex;justify-content:space-between}
+.proj-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.proj-box{padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:rgba(15,23,42,.6);text-align:center}
+.proj-offset{font-size:9px;color:var(--muted);font-family:'SF Mono',monospace;letter-spacing:.1em}
+.proj-price{font-size:12px;font-weight:700;font-family:'SF Mono',monospace;margin:2px 0}
+.proj-arrow{font-size:11px}
+.proj-up{color:#34d399;border-color:rgba(16,185,129,.4);background:rgba(16,185,129,.06)}
+.proj-down{color:#f87171;border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.06)}
+.proj-flat{color:#fbbf24;border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.06)}
 
-/* right */
+.ind-card{padding:12px;flex-shrink:0}
+.ind-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.ind-title{font-size:9px;letter-spacing:.2em;color:var(--muted);font-family:'SF Mono',monospace;text-transform:uppercase}
+.ind-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;font-size:11px;font-family:'SF Mono',monospace}
+.ind-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(51,65,85,.3)}
+.ind-row:last-child{border-bottom:none}
+.ind-label{color:var(--muted)}
+.ind-value{color:var(--dim);font-weight:600}
+.up{color:#34d399!important}
+.down{color:#f87171!important}
+.neutral{color:#fbbf24!important}
+
 aside.right{width:340px;flex-shrink:0;border-left:1px solid var(--border);
   overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px;background:rgba(2,6,23,.4)}
 .fc-card{padding:14px}
@@ -113,7 +130,7 @@ aside.right{width:340px;flex-shrink:0;border-left:1px solid var(--border);
 .btn-sync{background:rgba(56,189,248,.15);border:1px solid rgba(56,189,248,.4);color:#38bdf8}
 .btn-sync:hover{background:rgba(56,189,248,.25)}
 
-/* news */
+/* News */
 .news-card{padding:14px}
 .news-item{padding:8px;border:1px solid var(--border);border-radius:6px;background:rgba(15,23,42,.4);margin-bottom:6px}
 .news-meta{display:flex;gap:6px;align-items:center;font-size:9px;font-family:'SF Mono',monospace;margin-bottom:4px}
@@ -121,11 +138,40 @@ aside.right{width:340px;flex-shrink:0;border-left:1px solid var(--border);
 .news-headline{font-size:11px;color:#e2e8f0;line-height:1.4;font-weight:500}
 .news-summary{font-size:10px;color:var(--muted);line-height:1.4;margin-top:3px}
 
-/* modal */
+/* ====== ORDER FLOW VIEW ====== */
+#orderflow-view{flex-direction:column;padding:16px;gap:16px;background:rgba(2,6,23,.4)}
+.of-header{display:flex;justify-content:space-between;align-items:flex-end;flex-shrink:0}
+.of-title{font-size:20px;font-weight:800;font-family:'SF Mono',monospace;display:flex;align-items:center;gap:10px}
+.of-sub{font-size:12px;color:var(--muted);font-family:'SF Mono',monospace;margin-top:4px}
+
+.of-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;flex-shrink:0}
+.of-stat{padding:16px;border-radius:10px;background:rgba(15,23,42,.8);border:1px solid var(--border);text-align:center}
+.of-stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-family:'SF Mono',monospace;margin-bottom:8px}
+.of-stat-val{font-size:28px;font-weight:800;font-family:'SF Mono',monospace}
+
+.of-split{display:grid;grid-template-columns:1fr 400px;gap:12px;flex:1;overflow:hidden}
+.of-chart-card{display:flex;flex-direction:column;padding:14px;overflow:hidden}
+.of-chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.of-canvas-wrap{flex:1;position:relative}
+#cvdCanvas{width:100%;height:100%;display:block;background:rgba(2,6,23,.6);border-radius:8px}
+
+.of-tape-card{display:flex;flex-direction:column;padding:0;overflow:hidden;border-radius:12px;background:rgba(15,23,42,.8);border:1px solid var(--border)}
+.of-tape-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.of-tape-list{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:4px}
+.tape-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:6px 10px;border-radius:6px;font-family:'SF Mono',monospace;font-size:11px;background:rgba(2,6,23,.4)}
+.tape-row.buy{border-left:2px solid #10b981}
+.tape-row.sell{border-left:2px solid #ef4444}
+.tape-time{color:var(--muted);text-align:left}
+.tape-price{font-weight:700;text-align:right}
+.tape-size{text-align:right;font-weight:700}
+.tape-buy-text{color:#34d399}
+.tape-sell-text{color:#f87171}
+
+/* Modal */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);
   z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
 .modal-bg.open{display:flex}
-.modal{max-width:480px;width:100%;padding:24px;border-radius:14px}
+.modal{max-width:480px;width:100%;padding:24px;border-radius:14px;background:var(--panel);border:1px solid var(--border)}
 .modal-title{font-size:16px;font-weight:700;margin-bottom:4px}
 .modal-sub{font-size:11px;color:var(--muted);margin-bottom:16px;line-height:1.5}
 .modal-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
@@ -150,14 +196,17 @@ aside.right{width:340px;flex-shrink:0;border-left:1px solid var(--border);
 @media(max-width:1100px){
   aside.right{width:280px}
   aside.wl{width:160px}
-  .chart-card{height:300px}
+  .chart-card{height:340px}
+  .of-grid{grid-template-columns:1fr 1fr}
+  .of-split{grid-template-columns:1fr}
 }
 @media(max-width:768px){
   aside.wl{display:none}
-  aside.right{width:100%;position:absolute;inset:auto 0 0 0;max-height:45vh;border-left:none;border-top:1px solid var(--border);z-index:20}
-  .center{padding-bottom:45vh}
-  .chart-card{height:240px}
-  .fp-grid{grid-template-columns:1fr 1fr}
+  aside.right{display:none}
+  .center{padding-bottom:14px}
+  .chart-card{height:280px}
+  .proj-strip{grid-template-columns:repeat(3,1fr)}
+  .of-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -172,21 +221,19 @@ aside.right{width:340px;flex-shrink:0;border-left:1px solid var(--border);
         <div class="logo-sub">LIVE TERMINAL</div>
       </div>
     </div>
-    <div class="divider"></div>
+    
+    <!-- TAB SWITCHER -->
+    <div class="tab-nav">
+      <button class="tab-btn active" id="tabTerminal" onclick="switchTab('terminal')">📊 Terminal</button>
+      <button class="tab-btn" id="tabOrderFlow" onclick="switchTab('orderflow')">⚡ Order Flow (Footprint)</button>
+    </div>
+
+    <div style="flex:1"></div>
+
     <div class="pill" id="symbolPill">BTC/USDT</div>
     <div style="display:flex;align-items:baseline;gap:8px">
       <span class="price" id="priceLabel">—</span>
       <span class="change" id="changeLabel">—</span>
-    </div>
-    <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:#34d399;font-family:'SF Mono',monospace">
-      <span class="dot live-dot" id="liveDot" style="background:#34d399"></span>
-      <span id="liveLabel">LIVE</span>
-    </div>
-    <div style="flex:1"></div>
-    <div class="tf-group" id="tfGroup"></div>
-    <div class="bias-badge" id="biasBadge" style="background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3);color:#fbbf24">
-      <span class="dot" style="background:#fbbf24"></span>
-      <span id="biasText">NEUTRAL</span>
     </div>
     <button class="pill" onclick="openSettings()" style="color:#a5b4fc;border-color:rgba(99,102,241,.4)">
       ⚙ Settings
@@ -194,6 +241,7 @@ aside.right{width:340px;flex-shrink:0;border-left:1px solid var(--border);
   </header>
 
   <main>
+    <!-- LEFT WATCHLIST (Always visible) -->
     <aside class="wl">
       <div class="wl-header">
         <div class="wl-title">Watchlist</div>
@@ -202,111 +250,140 @@ aside.right{width:340px;flex-shrink:0;border-left:1px solid var(--border);
       <div id="watchlistBody"></div>
     </aside>
 
-    <section class="center">
-      <div class="glass chart-card">
-        <div class="chart-header">
-          <div style="display:flex;gap:8px;color:#cbd5e1">
-            <span id="chartSymbol">BTC/USDT</span>
-            <span style="color:#475569">·</span>
-            <span id="chartTF">15M</span>
-            <span style="color:#475569">·</span>
-            <span id="chartSource">TradingView</span>
+    <!-- VIEW 1: TERMINAL -->
+    <div class="view" id="terminal-view">
+      <section class="center">
+        <div class="glass chart-card">
+          <div class="chart-header">
+            <div style="display:flex;gap:8px;color:#cbd5e1">
+              <span id="chartSymbol">BTC/USDT</span>
+              <span style="color:#475569">·</span>
+              <span id="chartTF">15M</span>
+              <span style="color:#475569">·</span>
+              <span id="chartSource">TradingView</span>
+            </div>
+            <div style="font-size:10px;color:#475569;font-family:'SF Mono',monospace">
+              drag · zoom · add indicators
+            </div>
           </div>
-          <div style="font-size:10px;color:#475569;font-family:'SF Mono',monospace">
-            drag · zoom · add indicators
+          <div class="chart-body">
+            <div id="tv_chart"></div>
+            <div class="tv-placeholder" id="tvPlaceholder">Loading TradingView chart…</div>
           </div>
         </div>
-        <div class="chart-body">
-          <div id="tv_chart"></div>
-          <div class="tv-placeholder" id="tvPlaceholder">Loading TradingView chart…</div>
+
+        <div class="glass proj-card">
+          <div class="proj-title">
+            <span>Next 5 Periods — AI Projection</span>
+            <span id="projMeta">—</span>
+          </div>
+          <div class="proj-strip" id="projStrip">
+            <div class="proj-box proj-flat"><div class="proj-offset">+1</div><div class="proj-price">—</div><div class="proj-arrow">→</div></div>
+            <div class="proj-box proj-flat"><div class="proj-offset">+2</div><div class="proj-price">—</div><div class="proj-arrow">→</div></div>
+            <div class="proj-box proj-flat"><div class="proj-offset">+3</div><div class="proj-price">—</div><div class="proj-arrow">→</div></div>
+            <div class="proj-box proj-flat"><div class="proj-offset">+4</div><div class="proj-price">—</div><div class="proj-arrow">→</div></div>
+            <div class="proj-box proj-flat"><div class="proj-offset">+5</div><div class="proj-price">—</div><div class="proj-arrow">→</div></div>
+          </div>
+        </div>
+
+        <div class="glass ind-card">
+          <div class="ind-header">
+            <div class="ind-title">Technical Indicators</div>
+            <div style="font-size:9px;color:var(--muted);font-family:'SF Mono',monospace" id="indTicker">—</div>
+          </div>
+          <div class="ind-grid" id="indGrid">
+            <div class="ind-row"><span class="ind-label">Loading…</span></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="right">
+        <div class="glass fc-card">
+          <div class="fc-header">
+            <div class="fc-title-wrap">
+              <span class="dot" style="background:#6366f1"></span>
+              <span class="fc-title">AI Forecast</span>
+            </div>
+            <div style="display:flex;gap:4px">
+              <button onclick="syncPricePrompt()" class="btn-sync" style="padding:2px 6px;border-radius:4px;font-size:9px;font-family:'SF Mono',monospace">⚙ Sync</button>
+              <button id="refreshForecastBtn" onclick="refreshForecast(true)" style="font-size:9px;color:var(--muted);font-family:'SF Mono',monospace;letter-spacing:.1em">↻</button>
+            </div>
+          </div>
+          <div id="forecastBody">
+            <div class="fc-meta">Awaiting market data…</div>
+          </div>
+        </div>
+
+        <div class="glass news-card">
+          <div class="ind-header">
+            <div class="ind-title">Market Catalysts</div>
+            <div style="font-size:9px;color:var(--muted);font-family:'SF Mono',monospace" id="newsCount">—</div>
+          </div>
+          <div id="newsBody">
+            <div class="fc-meta">Awaiting news…</div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- VIEW 2: ORDER FLOW (FOOTPRINT) -->
+    <div class="view hidden" id="orderflow-view">
+      <div class="of-header">
+        <div>
+          <div class="of-title" id="ofSymbolTitle">BTC/USDT Footprint</div>
+          <div class="of-sub" id="ofStatus">Connecting to Binance WebSocket…</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="pill" onclick="clearTape()" style="color:#fbbf24;border-color:rgba(245,158,11,.4)">Clear Tape</button>
         </div>
       </div>
 
-      <!-- FOOTPRINT / VOLUME DELTA PANEL -->
-      <div class="glass fp-card">
-        <div class="fp-header">
-          <div class="fp-title">Live Footprint & Order Flow</div>
-          <div class="fp-title" id="fpSource" style="color:var(--dim)">Connecting…</div>
+      <div class="of-grid">
+        <div class="of-stat">
+          <div class="of-stat-label">Aggressive Buy Volume</div>
+          <div class="of-stat-val up" id="ofBuyVol">—</div>
         </div>
-        <div class="fp-grid">
-          <div class="fp-box">
-            <div class="fp-label">Buy Volume (Aggressor)</div>
-            <div class="fp-val fp-up" id="fpBuyVol">—</div>
-          </div>
-          <div class="fp-box">
-            <div class="fp-label">Sell Volume (Aggressor)</div>
-            <div class="fp-val fp-down" id="fpSellVol">—</div>
-          </div>
-          <div class="fp-box">
-            <div class="fp-label">Volume Delta (CVD)</div>
-            <div class="fp-val" id="fpDelta">—</div>
-          </div>
+        <div class="of-stat">
+          <div class="of-stat-label">Aggressive Sell Volume</div>
+          <div class="of-stat-val down" id="ofSellVol">—</div>
         </div>
-        <div style="font-size:10px;color:var(--muted);margin-top:6px;font-family:'SF Mono',monospace;text-align:center" id="fpStatus">
-          WebSocket disconnected.
+        <div class="of-stat">
+          <div class="of-stat-label">Cumulative Volume Delta (CVD)</div>
+          <div class="of-stat-val" id="ofDelta">—</div>
         </div>
       </div>
 
-      <!-- PROJECTION STRIP -->
-      <div class="glass proj-card">
-        <div class="proj-title">
-          <span>Next 5 Periods — AI Projection</span>
-          <span id="projMeta">—</span>
-        </div>
-        <div class="proj-strip" id="projStrip">
-          <div class="proj-box proj-flat"><div class="proj-offset">+1</div><div class="proj-price">—</div><div class="proj-arrow">→</div></div>
-          <div class="proj-box proj-flat"><div class="proj-offset">+2</div><div class="proj-price">—</div><div class="proj-arrow">→</div></div>
-          <div class="proj-box proj-flat"><div class="proj-offset">+3</div><div class="proj-price">—</div><div class="proj-arrow">→</div></div>
-          <div class="proj-box proj-flat"><div class="proj-offset">+4</div><div class="proj-price">—</div><div class="proj-arrow">→</div></div>
-          <div class="proj-box proj-flat"><div class="proj-offset">+5</div><div class="proj-price">—</div><div class="proj-arrow">→</div></div>
-        </div>
-      </div>
-
-      <div class="glass ind-card">
-        <div class="ind-header">
-          <div class="ind-title">Technical Indicators</div>
-          <div style="font-size:9px;color:var(--muted);font-family:'SF Mono',monospace" id="indTicker">—</div>
-        </div>
-        <div class="ind-grid" id="indGrid">
-          <div class="ind-row"><span class="ind-label">Loading…</span></div>
-        </div>
-      </div>
-    </section>
-
-    <aside class="right">
-      <div class="glass fc-card">
-        <div class="fc-header">
-          <div class="fc-title-wrap">
-            <span class="dot" style="background:#6366f1"></span>
-            <span class="fc-title">AI Forecast</span>
+      <div class="of-split">
+        <div class="glass of-chart-card">
+          <div class="of-chart-header">
+            <div class="ind-title">CVD Momentum Chart</div>
+            <div style="font-size:10px;color:var(--muted);font-family:'SF Mono',monospace">Live Ticks</div>
           </div>
-          <div style="display:flex;gap:4px">
-            <button onclick="syncPricePrompt()" class="btn-sync" style="padding:2px 6px;border-radius:4px;font-size:9px;font-family:'SF Mono',monospace">⚙ Sync</button>
-            <button id="refreshForecastBtn" onclick="refreshForecast(true)" style="font-size:9px;color:var(--muted);font-family:'SF Mono',monospace;letter-spacing:.1em">↻</button>
+          <div class="of-canvas-wrap">
+            <canvas id="cvdCanvas"></canvas>
           </div>
         </div>
-        <div id="forecastBody">
-          <div class="fc-meta">Awaiting market data…</div>
-        </div>
-      </div>
 
-      <div class="glass news-card">
-        <div class="ind-header">
-          <div class="ind-title">Market Catalysts</div>
-          <div style="font-size:9px;color:var(--muted);font-family:'SF Mono',monospace" id="newsCount">—</div>
-        </div>
-        <div id="newsBody">
-          <div class="fc-meta">Awaiting news…</div>
+        <div class="of-tape-card">
+          <div class="of-tape-header">
+            <div class="ind-title">Time & Sales (Aggressor Tape)</div>
+            <div class="dot live-dot" style="background:#34d399"></div>
+          </div>
+          <div class="of-tape-list" id="tapeList">
+            <!-- Trades will populate here -->
+            <div style="text-align:center;padding:20px;color:var(--muted);font-size:11px;font-family:'SF Mono',monospace">Waiting for trades...</div>
+          </div>
         </div>
       </div>
-    </aside>
+    </div>
+
   </main>
 </div>
 
 <div class="warn">⚠️ Not financial advice. Forecasts are probabilistic estimates.</div>
 
 <div class="modal-bg" id="settingsModal">
-  <div class="glass modal">
+  <div class="modal">
     <div class="modal-title">Configure AlphaPulse AI</div>
     <div class="modal-sub">Add a Gemini API key to enable AI forecasts and live world-news grounding.</div>
     <label class="modal-label">Gemini API Key</label>
@@ -327,7 +404,6 @@ aside.right{width:340px;flex-shrink:0;border-left:1px solid var(--border);
 /* ============ CONFIG ============ */
 const LS_KEY = 'alphapulse_gemini_key';
 const PROXY = 'https://alphapulse-proxy.YOUR-SUBDOMAIN.workers.dev'; 
-
 const TF_LIST = ['1m','5m','15m','1h','4h','1d'];
 const TF_TO_BINANCE = {'1m':'1m','5m':'5m','15m':'15m','1h':'1h','4h':'4h','1d':'1d'};
 const TF_TO_TV = {'1m':'1','5m':'5','15m':'15','1h':'60','4h':'240','1d':'D'};
@@ -366,6 +442,7 @@ const GROUPS = [
 
 /* ============ STATE ============ */
 const state = {
+  activeTab: 'terminal',
   symbol: 'BTC/USDT',
   timeframe: '15m',
   candles: [],
@@ -381,7 +458,8 @@ const state = {
   ws: null,
   fpBuy: 0,
   fpSell: 0,
-  fpStartTime: Date.now(),
+  cvdHistory: [],
+  tradeTape: [],
 };
 
 /* ============ HELPERS ============ */
@@ -392,19 +470,22 @@ const fmt = (n, dec) => {
   return n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
 };
 const fmtPct = n => Number.isFinite(n) ? `${n>=0?'+':''}${n.toFixed(2)}%` : '—';
-const colorFor = bias => {
-  if (bias === 'STRONG_BUY' || bias === 'BUY') return { text:'#34d399', bg:'rgba(16,185,129,.12)', border:'rgba(16,185,129,.4)', dot:'#10b981' };
-  if (bias === 'STRONG_SELL' || bias === 'SELL') return { text:'#f87171', bg:'rgba(239,68,68,.12)', border:'rgba(239,68,68,.4)', dot:'#ef4444' };
-  return { text:'#fbbf24', bg:'rgba(245,158,11,.12)', border:'rgba(245,158,11,.4)', dot:'#f59e0b' };
-};
-const sentimentTag = s => {
-  const cls = s === 'BULLISH' ? 'background:rgba(16,185,129,.15);color:#34d399;border-color:rgba(16,185,129,.4)' :
-              s === 'BEARISH' ? 'background:rgba(239,68,68,.15);color:#f87171;border-color:rgba(239,68,68,.4)' :
-                                'background:rgba(245,158,11,.15);color:#fbbf24;border-color:rgba(245,158,11,.4)';
-  return `style="${cls}"`;
-};
 const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const proxied = rawUrl => `${PROXY}/?url=${encodeURIComponent(rawUrl)}`;
+
+/* ============ TABS ============ */
+function switchTab(tab) {
+  state.activeTab = tab;
+  $('tabTerminal').classList.toggle('active', tab === 'terminal');
+  $('tabOrderFlow').classList.toggle('active', tab === 'orderflow');
+  
+  $('terminal-view').classList.toggle('hidden', tab !== 'terminal');
+  $('orderflow-view').classList.toggle('hidden', tab !== 'orderflow');
+
+  if (tab === 'orderflow') {
+    resizeCVDCanvas();
+  }
+}
 
 /* ============ TRADINGVIEW WIDGET ============ */
 function mountTVChart() {
@@ -412,6 +493,8 @@ function mountTVChart() {
   if (!meta) return;
   const container = $('tv_chart');
   const placeholder = $('tvPlaceholder');
+  if (!container) return;
+  
   container.innerHTML = '';
   placeholder.style.display = 'none';
 
@@ -447,97 +530,203 @@ function mountTVChart() {
   }
 }
 
-/* ============ LIVE FOOTPRINT WEBSOCKET (CRYPTO) ============ */
+/* ============ LIVE FOOTPRINT WEBSOCKET ============ */
 function connectFootprintWS() {
-  // Close existing
   if (state.ws) {
     state.ws.close();
     state.ws = null;
   }
 
   const meta = SYMBOLS[state.symbol];
-  if (!meta || !meta.binance) {
-    // Not a crypto symbol — footprint not available via free feed
-    $('fpSource').textContent = 'Not available for this asset class';
-    $('fpBuyVol').textContent = '—';
-    $('fpSellVol').textContent = '—';
-    $('fpDelta').textContent = '—';
-    $('fpStatus').textContent = 'Free footprint data is only available for crypto (Binance).';
+  const isCrypto = !!meta?.binance;
+
+  $('ofSymbolTitle').textContent = `${state.symbol} Footprint`;
+  
+  if (!isCrypto) {
+    $('ofStatus').textContent = 'Footprint data is only available for Crypto via Binance WebSocket.';
+    $('ofStatus').style.color = '#fbbf24';
+    $('ofBuyVol').textContent = '—';
+    $('ofSellVol').textContent = '—';
+    $('ofDelta').textContent = '—';
+    $('tapeList').innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:11px;font-family:\'SF Mono\',monospace">No data for this asset class.</div>';
     return;
   }
 
-  // Reset aggregation
+  $('ofStatus').style.color = '#34d399';
+  $('ofStatus').textContent = 'Connecting to Binance WebSocket…';
+
   state.fpBuy = 0;
   state.fpSell = 0;
-  state.fpStartTime = Date.now();
-  updateFootprintUI();
+  state.cvdHistory = [];
+  state.tradeTape = [];
+  clearTape();
+  updateOrderFlowUI();
+  drawCVDChart();
 
   const stream = `wss://stream.binance.com:9443/ws/${meta.binance.toLowerCase()}@aggTrade`;
-  $('fpSource').textContent = 'Binance WebSocket';
-  $('fpStatus').textContent = 'Connecting to Binance…';
-
+  
   try {
     state.ws = new WebSocket(stream);
 
     state.ws.onopen = () => {
-      $('fpStatus').textContent = 'Connected. Listening for aggregated trades…';
-      $('liveDot').style.background = '#34d399';
-      $('liveLabel').textContent = 'LIVE';
+      $('ofStatus').textContent = 'Live · Connected to Binance Matching Engine';
     };
 
     state.ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      // aggTrade payload: m = isBuyerMaker (true = sell aggressor, false = buy aggressor)
       const qty = parseFloat(data.q);
-      const isSell = data.m; // If maker is buyer, then aggressor is seller
+      const price = parseFloat(data.p);
+      const isSell = data.m; // true = sell aggressor, false = buy aggressor
+      const time = new Date(data.T).toLocaleTimeString('en-US', { hour12: false });
 
       if (isSell) {
         state.fpSell += qty;
       } else {
         state.fpBuy += qty;
       }
-      updateFootprintUI();
+
+      // Update CVD history
+      const cvd = state.fpBuy - state.fpSell;
+      state.cvdHistory.push(cvd);
+      if (state.cvdHistory.length > 100) state.cvdHistory.shift();
+
+      // Update Tape
+      state.tradeTape.unshift({ time, price, qty, isSell });
+      if (state.tradeTape.length > 50) state.tradeTape.pop();
+
+      updateOrderFlowUI();
+      drawCVDChart();
     };
 
-    state.ws.onerror = (err) => {
-      console.warn('WebSocket error:', err);
-      $('fpStatus').textContent = 'WebSocket error. Reconnecting…';
+    state.ws.onerror = () => {
+      $('ofStatus').textContent = 'WebSocket error. Reconnecting…';
+      $('ofStatus').style.color = '#f87171';
     };
 
     state.ws.onclose = () => {
-      $('fpStatus').textContent = 'Disconnected.';
-      $('liveDot').style.background = '#64748b';
-      $('liveLabel').textContent = 'OFFLINE';
-      // Auto-reconnect after 3s if still on a crypto symbol
+      $('ofStatus').textContent = 'Disconnected.';
+      $('ofStatus').style.color = '#64748b';
       setTimeout(() => {
-        if (SYMBOLS[state.symbol]?.binance && (!state.ws || state.ws.readyState === WebSocket.CLOSED)) {
+        if (state.activeTab === 'orderflow' && SYMBOLS[state.symbol]?.binance && (!state.ws || state.ws.readyState === WebSocket.CLOSED)) {
           connectFootprintWS();
         }
       }, 3000);
     };
   } catch (e) {
-    $('fpStatus').textContent = 'Failed to connect: ' + e.message;
+    $('ofStatus').textContent = 'Failed to connect: ' + e.message;
+    $('ofStatus').style.color = '#f87171';
   }
 }
 
-function updateFootprintUI() {
+function updateOrderFlowUI() {
   const buy = state.fpBuy;
   const sell = state.fpSell;
   const delta = buy - sell;
 
-  $('fpBuyVol').textContent = buy > 0 ? buy.toFixed(3) : '—';
-  $('fpSellVol').textContent = sell > 0 ? sell.toFixed(3) : '—';
+  $('ofBuyVol').textContent = buy > 0 ? buy.toFixed(2) : '0.00';
+  $('ofSellVol').textContent = sell > 0 ? sell.toFixed(2) : '0.00';
+  
+  const dEl = $('ofDelta');
+  dEl.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(2);
+  dEl.className = 'of-stat-val ' + (delta > 0 ? 'up' : delta < 0 ? 'down' : 'neutral');
 
-  const dEl = $('fpDelta');
-  dEl.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(3);
-  if (delta > 0) {
-    dEl.className = 'fp-val fp-up';
-  } else if (delta < 0) {
-    dEl.className = 'fp-val fp-down';
-  } else {
-    dEl.className = 'fp-val fp-neutral';
-  }
+  // Render tape
+  if (state.tradeTape.length === 0) return;
+  const tapeHTML = state.tradeTape.map(t => `
+    <div class="tape-row ${t.isSell ? 'sell' : 'buy'}">
+      <span class="tape-time">${t.time}</span>
+      <span class="tape-price ${t.isSell ? 'tape-sell-text' : 'tape-buy-text'}">${fmt(t.price)}</span>
+      <span class="tape-size ${t.isSell ? 'tape-sell-text' : 'tape-buy-text'}">${t.qty.toFixed(3)}</span>
+    </div>
+  `).join('');
+  
+  const list = $('tapeList');
+  const isScrolledToTop = list.scrollTop === 0;
+  list.innerHTML = tapeHTML;
+  if (isScrolledToTop) list.scrollTop = 0;
 }
+
+function clearTape() {
+  state.tradeTape = [];
+  $('tapeList').innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:11px;font-family:\'SF Mono\',monospace">Waiting for trades...</div>';
+}
+
+/* ============ CVD CANVAS CHART ============ */
+function resizeCVDCanvas() {
+  const canvas = $('cvdCanvas');
+  if (!canvas) return;
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  drawCVDChart();
+}
+
+function drawCVDChart() {
+  const canvas = $('cvdCanvas');
+  if (!canvas || state.activeTab !== 'orderflow') return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width / (window.devicePixelRatio || 1);
+  const H = canvas.height / (window.devicePixelRatio || 1);
+  
+  ctx.clearRect(0, 0, W, H);
+
+  if (state.cvdHistory.length < 2) {
+    ctx.fillStyle = 'rgba(148,163,184,.5)';
+    ctx.font = '12px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('Waiting for trade flow data...', W/2, H/2);
+    return;
+  }
+
+  let min = Math.min(...state.cvdHistory);
+  let max = Math.max(...state.cvdHistory);
+  if (min === max) { min -= 1; max += 1; }
+  const pad = (max - min) * 0.1;
+  min -= pad;
+  max += pad;
+
+  const toX = i => (i / (state.cvdHistory.length - 1)) * W;
+  const toY = v => H - ((v - min) / (max - min)) * H;
+
+  // Zero line
+  if (min < 0 && max > 0) {
+    const zy = toY(0);
+    ctx.strokeStyle = 'rgba(100,116,139,.4)';
+    ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(0, zy); ctx.lineTo(W, zy); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // CVD Line
+  ctx.beginPath();
+  ctx.moveTo(toX(0), toY(state.cvdHistory[0]));
+  for (let i = 1; i < state.cvdHistory.length; i++) {
+    ctx.lineTo(toX(i), toY(state.cvdHistory[i]));
+  }
+  
+  const isPositive = state.cvdHistory[state.cvdHistory.length-1] >= 0;
+  ctx.strokeStyle = isPositive ? '#34d399' : '#f87171';
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  // Gradient Fill
+  ctx.lineTo(W, H);
+  ctx.lineTo(0, H);
+  ctx.closePath();
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, isPositive ? 'rgba(16,185,129,.2)' : 'rgba(239,68,68,.2)');
+  grad.addColorStop(1, 'transparent');
+  ctx.fillStyle = grad;
+  ctx.fill();
+}
+
+window.addEventListener('resize', () => {
+  if (state.activeTab === 'orderflow') resizeCVDCanvas();
+});
 
 /* ============ DATA FETCHERS ============ */
 async function fetchLivePrice() {
@@ -569,86 +758,34 @@ async function fetchLivePrice() {
   } catch {}
 }
 
-async function loadCryptoCandles(meta, tf) {
-  const binanceTF = TF_TO_BINANCE[tf];
-  const raw = `https://data-api.binance.vision/api/v3/klines?symbol=${meta.binance}&interval=${binanceTF}&limit=150`;
-
-  try {
-    const r = await fetch(proxied(raw), { signal: AbortSignal.timeout(8000) });
-    if (r.ok) {
-      const rows = await r.json();
-      if (Array.isArray(rows) && rows.length) {
-        state.dataSource = 'Binance (worker)';
-        return rows.map(r => ({
-          time: r[0] / 1000, open: +r[1], high: +r[2], low: +r[3], close: +r[4],
-        }));
-      }
-    }
-  } catch (e) { console.warn('worker crypto failed:', e.message); }
-
-  if (meta.coingecko) {
-    try {
-      const days = tf === '1d' ? 30 : 1;
-      const r = await fetch(`https://api.coingecko.com/api/v3/coins/${meta.coingecko}/ohlc?vs_currency=usd&days=${days}`, { signal: AbortSignal.timeout(9000) });
-      if (r.ok) {
-        const rows = await r.json();
-        if (rows.length) {
-          state.dataSource = 'CoinGecko';
-          return rows.map(([t, o, h, l, c]) => ({ time: t / 1000, open: o, high: h, low: l, close: c }));
-        }
-      }
-    } catch {}
-  }
-  throw new Error('All crypto sources failed');
-}
-
-async function loadYahooCandles(meta, tf) {
-  const tfMap = {
-    '1m': { interval: '1m',  range: '1d' },
-    '5m': { interval: '5m',  range: '2d' },
-    '15m':{ interval: '15m', range: '5d' },
-    '1h': { interval: '60m', range: '1mo' },
-    '4h': { interval: '60m', range: '3mo' },
-    '1d': { interval: '1d',  range: '1y' },
-  };
-  const c = tfMap[tf] || tfMap['15m'];
-  const raw = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(meta.yahoo)}?interval=${c.interval}&range=${c.range}`;
-
-  const r = await fetch(proxied(raw), { signal: AbortSignal.timeout(9000) });
-  if (!r.ok) throw new Error(`Yahoo HTTP ${r.status}`);
-
-  const j = await r.json();
-  const result = j.chart?.result?.[0];
-  if (!result?.timestamp) throw new Error('Yahoo returned no data');
-
-  const q = result.indicators.quote[0];
-  const out = [];
-  result.timestamp.forEach((t, i) => {
-    if (q.close[i] != null && !isNaN(q.close[i])) {
-      out.push({
-        time: t,
-        open:  +(q.open[i]  ?? q.close[i]),
-        high:  +(q.high[i]  ?? q.close[i]),
-        low:   +(q.low[i]   ?? q.close[i]),
-        close: +q.close[i],
-      });
-    }
-  });
-  if (!out.length) throw new Error('Yahoo candle array empty');
-
-  state.dataSource = 'Yahoo (worker)';
-  return out;
-}
-
 async function loadCandles() {
   state.loadingCandles = true;
   const meta = SYMBOLS[state.symbol];
   if (!meta) { state.loadingCandles = false; return; }
 
   try {
-    const candles = meta.binance
-      ? await loadCryptoCandles(meta, state.timeframe)
-      : await loadYahooCandles(meta, state.timeframe);
+    let candles;
+    if (meta.binance) {
+      const binanceTF = TF_TO_BINANCE[state.timeframe];
+      const raw = `https://data-api.binance.vision/api/v3/klines?symbol=${meta.binance}&interval=${binanceTF}&limit=150`;
+      const r = await fetch(proxied(raw), { signal: AbortSignal.timeout(8000) });
+      if (!r.ok) throw new Error('Worker failed');
+      const rows = await r.json();
+      state.dataSource = 'Binance (worker)';
+      candles = rows.map(r => ({ time: r[0]/1000, open: +r[1], high: +r[2], low: +r[3], close: +r[4] }));
+    } else {
+      const tfMap = {'1m':{interval:'1m',range:'1d'},'5m':{interval:'5m',range:'2d'},'15m':{interval:'15m',range:'5d'},'1h':{interval:'60m',range:'1mo'},'4h':{interval:'60m',range:'3mo'},'1d':{interval:'1d',range:'1y'}};
+      const c = tfMap[state.timeframe] || tfMap['15m'];
+      const raw = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(meta.yahoo)}?interval=${c.interval}&range=${c.range}`;
+      const r = await fetch(proxied(raw), { signal: AbortSignal.timeout(9000) });
+      if (!r.ok) throw new Error('Worker failed');
+      const j = await r.json();
+      const result = j.chart?.result?.[0];
+      if (!result?.timestamp) throw new Error('No data');
+      const q = result.indicators.quote[0];
+      candles = result.timestamp.map((t, i) => q.close[i] != null ? { time: t, open: +(q.open[i]??q.close[i]), high: +(q.high[i]??q.close[i]), low: +(q.low[i]??q.close[i]), close: +q.close[i] } : null).filter(Boolean);
+      state.dataSource = 'Yahoo (worker)';
+    }
 
     state.candles = candles.slice(-200);
     computeIndicators();
@@ -660,11 +797,7 @@ async function loadCandles() {
     console.warn('candles failed:', e.message);
     state.dataSource = 'TV only';
     state.indicators = null;
-    state.candles = [];
-    $('indGrid').innerHTML = '<div class="ind-row"><span class="ind-label" style="color:#fbbf24">Indicators unavailable — data source blocked.</span></div>';
-    $('priceLabel').textContent = '—';
-    $('changeLabel').textContent = '—';
-    renderProjection();
+    $('indGrid').innerHTML = '<div class="ind-row"><span class="ind-label" style="color:#fbbf24">Data blocked.</span></div>';
   } finally {
     state.loadingCandles = false;
   }
@@ -676,24 +809,16 @@ function ema(values, period) {
   const k = 2/(period+1);
   let prev = values.slice(0, period).reduce((a,b)=>a+b,0)/period;
   const out = [prev];
-  for (let i = period; i < values.length; i++) {
-    prev = values[i]*k + prev*(1-k);
-    out.push(prev);
-  }
+  for (let i = period; i < values.length; i++) { prev = values[i]*k + prev*(1-k); out.push(prev); }
   return out;
 }
 function rsi(closes, period=14) {
   if (closes.length < period+1) return 50;
-  let gains=0, losses=0;
-  for (let i=1;i<=period;i++) { const d=closes[i]-closes[i-1]; if (d>=0) gains+=d; else losses-=d; }
-  let aG=gains/period, aL=losses/period;
-  for (let i=period+1;i<closes.length;i++) {
-    const d=closes[i]-closes[i-1];
-    aG=(aG*(period-1)+(d>0?d:0))/period;
-    aL=(aL*(period-1)+(d<0?-d:0))/period;
-  }
-  if (aL===0) return 100;
-  return 100 - 100/(1+aG/aL);
+  let g=0, l=0;
+  for (let i=1;i<=period;i++) { const d=closes[i]-closes[i-1]; if (d>=0) g+=d; else l-=d; }
+  let aG=g/period, aL=l/period;
+  for (let i=period+1;i<closes.length;i++) { const d=closes[i]-closes[i-1]; aG=(aG*(period-1)+(d>0?d:0))/period; aL=(aL*(period-1)+(d<0?-d:0))/period; }
+  return aL===0 ? 100 : 100 - 100/(1+aG/aL);
 }
 function macd(closes) {
   const eF = ema(closes,12), eS = ema(closes,26);
@@ -701,29 +826,23 @@ function macd(closes) {
   const off = eS.length - eF.length;
   const line = eF.map((v,i)=> v - eS[i+off]);
   const sig = ema(line,9);
-  const m = line[line.length-1];
-  const s = sig[sig.length-1] ?? m;
+  const m = line[line.length-1], s = sig[sig.length-1] ?? m;
   return { macd:m, signal:s, hist:m-s };
 }
 function atr(candles, period=14) {
   if (candles.length < 2) return 0;
-  const trs = candles.map((c,i)=> i===0 ? c.high-c.low :
-    Math.max(c.high-c.low, Math.abs(c.high-candles[i-1].close), Math.abs(c.low-candles[i-1].close)));
+  const trs = candles.map((c,i)=> i===0 ? c.high-c.low : Math.max(c.high-c.low, Math.abs(c.high-candles[i-1].close), Math.abs(c.low-candles[i-1].close)));
   let a = trs.slice(0,period).reduce((s,v)=>s+v,0)/Math.min(period,trs.length);
   for (let i=period;i<trs.length;i++) a=(a*(period-1)+trs[i])/period;
   return a;
 }
 function computeIndicators() {
   const closes = state.candles.map(c=>c.close);
-  if (closes.length < 30) { state.indicators = null; return; }
+  if (closes.length < 30) return;
   const e20 = ema(closes,20), e50 = ema(closes,50), e200 = ema(closes,200);
-  const m = macd(closes);
-  const last = closes[closes.length-1];
-  const prev = closes[closes.length-2] ?? last;
+  const m = macd(closes), last = closes[closes.length-1], prev = closes[closes.length-2] ?? last;
   const rsiVal = rsi(closes,14);
-  const macdBias = m.hist > 0 ? 1 : -1;
-  const emaBias = last > (e20[e20.length-1] ?? last) ? 1 : -1;
-  const score = (rsiVal>55?1:rsiVal<45?-1:0) + macdBias + emaBias;
+  const score = (rsiVal>55?1:rsiVal<45?-1:0) + (m.hist>0?1:-1) + (last>(e20[e20.length-1]??last)?1:-1);
   let bias = 'NEUTRAL';
   if (score >= 2) bias = 'BUY';
   if (score >= 3 && rsiVal > 60) bias = 'STRONG_BUY';
@@ -731,15 +850,10 @@ function computeIndicators() {
   if (score <= -3 && rsiVal < 40) bias = 'STRONG_SELL';
 
   state.indicators = {
-    rsi: rsiVal,
-    macd: m,
-    ema20: e20[e20.length-1] ?? last,
-    ema50: e50[e50.length-1] ?? last,
-    ema200: e200[e200.length-1] ?? last,
-    atr: atr(state.candles,14),
-    last, prev,
-    change24h: prev ? ((last-prev)/prev)*100 : 0,
-    bias,
+    rsi: rsiVal, macd: m,
+    ema20: e20[e20.length-1] ?? last, ema50: e50[e50.length-1] ?? last, ema200: e200[e200.length-1] ?? last,
+    atr: atr(state.candles,14), last, prev,
+    change24h: prev ? ((last-prev)/prev)*100 : 0, bias,
   };
 }
 
@@ -757,151 +871,60 @@ async function refreshForecast(manual=false) {
     state.news = state.forecast.newsCatalysts;
     state.loadingForecast = false;
     if (manual) $('refreshForecastBtn').textContent = '↻';
-    renderForecast();
-    renderNews();
-    renderProjection();
+    renderForecast(); renderNews(); renderProjection();
     return;
   }
 
   try {
     const meta = SYMBOLS[state.symbol];
-    const recent = state.candles.slice(-5).map(c=>c.close.toFixed(2)).join(' → ');
-    const prompt = `You are a world-class Quantitative Technical Analyst with real-time world news access.
-
-Analyze ${state.symbol} (${meta.label}) on the ${state.timeframe} timeframe.
-
-MARKET DATA:
-Current price: ${basePrice}
-Change: ${state.indicators.change24h.toFixed(2)}%
-- RSI(14): ${state.indicators.rsi.toFixed(2)}
-- MACD: ${state.indicators.macd.macd.toFixed(4)} | Signal: ${state.indicators.macd.signal.toFixed(4)} | Hist: ${state.indicators.macd.hist.toFixed(4)}
-- EMA20: ${state.indicators.ema20.toFixed(2)}, EMA50: ${state.indicators.ema50.toFixed(2)}, EMA200: ${state.indicators.ema200.toFixed(2)}
-- ATR(14): ${state.indicators.atr.toFixed(4)}
-- Recent closes: ${recent}
-
-SEARCH THE WEB for the latest breaking news affecting ${state.symbol}.
-
-Return ONLY valid JSON (no markdown):
-{
-  "bias": "STRONG_BUY"|"BUY"|"NEUTRAL"|"SELL"|"STRONG_SELL",
-  "confidenceScore": <50-98>,
-  "summary": "<2-3 sentences>",
-  "scenarios": {
-    "bullish": {"probability":<int>,"targetPrice":<num>,"timeHorizon":"<str>","catalyst":"<str>"},
-    "baseCase": {"probability":<int>,"expectedRange":[<num>,<num>],"timeHorizon":"<str>","catalyst":"<str>"},
-    "bearish": {"probability":<int>,"targetPrice":<num>,"timeHorizon":"<str>","catalyst":"<str>"}
-  },
-  "keyLevels": {"immediateResistance":<num>,"majorResistance":<num>,"immediateSupport":<num>,"criticalInvalidation":<num>},
-  "projectedCandles": [
-    {"candleOffset":1,"projectedClose":<num>,"upperBound":<num>,"lowerBound":<num>,"predictedTrend":"up"|"down"|"flat"},
-    {"candleOffset":2,"projectedClose":<num>,"upperBound":<num>,"lowerBound":<num>,"predictedTrend":"up"|"down"|"flat"},
-    {"candleOffset":3,"projectedClose":<num>,"upperBound":<num>,"lowerBound":<num>,"predictedTrend":"up"|"down"|"flat"},
-    {"candleOffset":4,"projectedClose":<num>,"upperBound":<num>,"lowerBound":<num>,"predictedTrend":"up"|"down"|"flat"},
-    {"candleOffset":5,"projectedClose":<num>,"upperBound":<num>,"lowerBound":<num>,"predictedTrend":"up"|"down"|"flat"}
-  ],
-  "newsCatalysts": [
-    {"headline":"<str>","source":"<str>","sentiment":"BULLISH"|"BEARISH"|"NEUTRAL","impactScore":<-100 to 100>,"summary":"<str>"},
-    {"headline":"<str>","source":"<str>","sentiment":"BULLISH"|"BEARISH"|"NEUTRAL","impactScore":<-100 to 100>,"summary":"<str>"},
-    {"headline":"<str>","source":"<str>","sentiment":"BULLISH"|"BEARISH"|"NEUTRAL","impactScore":<-100 to 100>,"summary":"<str>"},
-    {"headline":"<str>","source":"<str>","sentiment":"BULLISH"|"BEARISH"|"NEUTRAL","impactScore":<-100 to 100>,"summary":"<str>"}
-  ],
-  "recommendedSignal": {
-    "action":"BUY"|"STRONG_BUY"|"SELL"|"STRONG_SELL"|"HOLD",
-    "entryZone":[<num>,<num>],
-    "takeProfit1":<num>,"takeProfit2":<num>,"stopLoss":<num>,
-    "riskRewardRatio":"1:X.X","horizon":"<str>","rationale":"<str>"
-  }
-}
-Probabilities sum to 100. Prices realistic near ${basePrice}.`;
+    const prompt = `You are a world-class Quantitative Technical Analyst. Analyze ${state.symbol} (${meta.label}) on ${state.timeframe}. Price: ${basePrice}, RSI: ${state.indicators.rsi.toFixed(2)}, MACD: ${state.indicators.macd.hist.toFixed(4)}. Search the web for breaking news affecting ${state.symbol}.
+Return ONLY valid JSON:
+{"bias":"STRONG_BUY"|"BUY"|"NEUTRAL"|"SELL"|"STRONG_SELL","confidenceScore":<50-98>,"summary":"<str>","scenarios":{"bullish":{"probability":<int>,"targetPrice":<num>,"timeHorizon":"<str>","catalyst":"<str>"},"baseCase":{"probability":<int>,"expectedRange":[<num>,<num>],"timeHorizon":"<str>","catalyst":"<str>"},"bearish":{"probability":<int>,"targetPrice":<num>,"timeHorizon":"<str>","catalyst":"<str>"}},"keyLevels":{"immediateResistance":<num>,"majorResistance":<num>,"immediateSupport":<num>,"criticalInvalidation":<num>},"projectedCandles":[{"candleOffset":1,"projectedClose":<num>,"upperBound":<num>,"lowerBound":<num>,"predictedTrend":"up"|"down"|"flat"},{"candleOffset":2,"projectedClose":<num>,"upperBound":<num>,"lowerBound":<num>,"predictedTrend":"up"|"down"|"flat"},{"candleOffset":3,"projectedClose":<num>,"upperBound":<num>,"lowerBound":<num>,"predictedTrend":"up"|"down"|"flat"},{"candleOffset":4,"projectedClose":<num>,"upperBound":<num>,"lowerBound":<num>,"predictedTrend":"up"|"down"|"flat"},{"candleOffset":5,"projectedClose":<num>,"upperBound":<num>,"lowerBound":<num>,"predictedTrend":"up"|"down"|"flat"}],"newsCatalysts":[{"headline":"<str>","source":"<str>","sentiment":"BULLISH"|"BEARISH"|"NEUTRAL","impactScore":<-100 to 100>,"summary":"<str>"}],"recommendedSignal":{"action":"BUY"|"STRONG_BUY"|"SELL"|"STRONG_SELL"|"HOLD","entryZone":[<num>,<num>],"takeProfit1":<num>,"takeProfit2":<num>,"stopLoss":<num>,"riskRewardRatio":"1:X.X","horizon":"<str>","rationale":"<str>"}}
+Probabilities sum to 100.`;
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-    const r = await fetch(url, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        contents:[{parts:[{text:prompt}]}],
-        tools:[{googleSearch:{}}],
-        generationConfig:{temperature:0.2}
-      })
-    });
-    if (!r.ok) throw new Error('Gemini HTTP ' + r.status);
+    const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{parts:[{text:prompt}]}], tools:[{googleSearch:{}}], generationConfig:{temperature:0.2} }) });
+    if (!r.ok) throw new Error('Gemini failed');
     const j = await r.json();
     const text = j.candidates?.[0]?.content?.parts?.[0]?.text || '';
     const cleaned = text.replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
-    const match = cleaned.match(/\{[\s\S]*\}/);
-    state.forecast = JSON.parse(match ? match[0] : cleaned);
+    state.forecast = JSON.parse(cleaned.match(/\{[\s\S]*\}/)[0]);
     state.news = state.forecast.newsCatalysts || [];
   } catch (e) {
-    console.warn('AI forecast failed:', e.message);
     state.forecast = algorithmicForecast(basePrice);
     state.news = state.forecast.newsCatalysts;
   } finally {
     state.loadingForecast = false;
     if (manual) $('refreshForecastBtn').textContent = '↻';
-    renderForecast();
-    renderNews();
-    renderProjection();
+    renderForecast(); renderNews(); renderProjection();
   }
 }
 
 function algorithmicForecast(price) {
-  const ind = state.indicators;
-  const delta = price * 0.015;
-  const isBull = ind.rsi > 50 && ind.macd.hist > 0;
+  const ind = state.indicators, delta = price * 0.015, isBull = ind.rsi > 50 && ind.macd.hist > 0;
   const bias = isBull ? (ind.rsi > 65 ? 'STRONG_BUY' : 'BUY') : (ind.rsi < 35 ? 'STRONG_SELL' : 'SELL');
-  const bullT = +(price + delta*1.8).toFixed(4);
-  const bearT = +(price - delta*1.5).toFixed(4);
-  const step = (bullT - price) / 6;
-  const bullP = isBull ? 62 : 28, baseP = 25, bearP = 100 - bullP - baseP;
-  const spread = price * 0.004;
-
+  const bullT = +(price + delta*1.8).toFixed(4), bearT = +(price - delta*1.5).toFixed(4), step = (bullT - price) / 6;
   return {
-    bias,
-    confidenceScore: 72,
-    summary: `${state.symbol} ${state.timeframe}: RSI ${ind.rsi.toFixed(1)}, MACD ${ind.macd.hist>0?'bullish':'bearish'}, price ${price>ind.ema20?'above':'below'} EMA20. ${isBull?'Momentum favors continuation.':'Pressure favors retest of support.'} (Algorithmic — add Gemini key for AI analysis.)`,
+    bias, confidenceScore: 72,
+    summary: `${state.symbol} ${state.timeframe}: RSI ${ind.rsi.toFixed(1)}, MACD ${ind.macd.hist>0?'bullish':'bearish'}, price ${price>ind.ema20?'above':'below'} EMA20. ${isBull?'Momentum favors continuation.':'Pressure favors retest of support.'} (Algorithmic)`,
     scenarios: {
-      bullish: { probability: bullP, targetPrice: bullT, timeHorizon:'2-4h', catalyst:'Breakout above resistance on strong buy delta' },
-      baseCase: { probability: baseP, expectedRange:[+(price-delta*0.4).toFixed(4), +(price+delta*0.5).toFixed(4)], timeHorizon:'1-3h', catalyst:'Consolidation within value area' },
-      bearish: { probability: bearP, targetPrice: bearT, timeHorizon:'3-6h', catalyst:'Failure to hold EMA20 triggers stops' }
+      bullish: { probability: isBull?62:28, targetPrice: bullT, timeHorizon:'2-4h', catalyst:'Breakout above resistance' },
+      baseCase: { probability: 25, expectedRange:[+(price-delta*0.4).toFixed(4), +(price+delta*0.5).toFixed(4)], timeHorizon:'1-3h', catalyst:'Consolidation' },
+      bearish: { probability: isBull?13:47, targetPrice: bearT, timeHorizon:'3-6h', catalyst:'Failure to hold support' }
     },
-    keyLevels: {
-      immediateResistance: +(price+delta*0.7).toFixed(4),
-      majorResistance: +(price+delta*1.6).toFixed(4),
-      immediateSupport: +(price-delta*0.6).toFixed(4),
-      criticalInvalidation: +(price-delta*1.4).toFixed(4)
-    },
-    projectedCandles: Array.from({length:5}, (_,i) => ({
-      candleOffset: i+1,
-      projectedClose: +(price + (isBull?step*(i+1):-step*(i+1))).toFixed(4),
-      upperBound: +(price + delta*(0.5+i*0.2)).toFixed(4),
-      lowerBound: +(price - delta*(0.3+i*0.2)).toFixed(4),
-      predictedTrend: isBull ? 'up' : 'down'
-    })),
-    newsCatalysts: [
-      { headline:'Add Gemini API key to unlock live world news', source:'AlphaPulse', sentiment:'NEUTRAL', impactScore:0, summary:'Click ⚙ Settings in the header to enable AI forecasts with web-search grounding.' },
-      { headline:'Algorithmic model active', source:'AlphaPulse', sentiment:isBull?'BULLISH':'BEARISH', impactScore:isBull?60:-60, summary:'Technical-only forecast using RSI, MACD, EMA and ATR.' }
-    ],
-    recommendedSignal: {
-      action: isBull ? 'BUY' : 'SELL',
-      entryZone: [+(price-spread).toFixed(4), +(price+spread).toFixed(4)],
-      takeProfit1: +(price + (isBull?delta*1.2:-delta*1.2)).toFixed(4),
-      takeProfit2: +(price + (isBull?delta*2.2:-delta*2.2)).toFixed(4),
-      stopLoss: +(price - (isBull?delta*0.8:-delta*0.8)).toFixed(4),
-      riskRewardRatio:'1:2.4',
-      horizon:'Scalp / Intraday',
-      rationale:`${isBull?'Long':'Short'} bias confirmed by multi-indicator confluence. Stops beyond structural invalidation.`
-    }
+    keyLevels: { immediateResistance:+(price+delta*0.7).toFixed(4), majorResistance:+(price+delta*1.6).toFixed(4), immediateSupport:+(price-delta*0.6).toFixed(4), criticalInvalidation:+(price-delta*1.4).toFixed(4) },
+    projectedCandles: Array.from({length:5}, (_,i) => ({ candleOffset:i+1, projectedClose:+(price+(isBull?step*(i+1):-step*(i+1))).toFixed(4), upperBound:+(price+delta*(0.5+i*0.2)).toFixed(4), lowerBound:+(price-delta*(0.3+i*0.2)).toFixed(4), predictedTrend:isBull?'up':'down' })),
+    newsCatalysts: [{ headline:'Algorithmic model active', source:'AlphaPulse', sentiment:isBull?'BULLISH':'BEARISH', impactScore:0, summary:'Add Gemini key for AI news.' }],
+    recommendedSignal: { action:isBull?'BUY':'SELL', entryZone:[+(price*0.996).toFixed(4), +(price*1.004).toFixed(4)], takeProfit1:+(price+(isBull?delta*1.2:-delta*1.2)).toFixed(4), takeProfit2:+(price+(isBull?delta*2.2:-delta*2.2)).toFixed(4), stopLoss:+(price-(isBull?delta*0.8:-delta*0.8)).toFixed(4), riskRewardRatio:'1:2.4', horizon:'Intraday', rationale:'Multi-indicator confluence.' }
   };
 }
 
-/* ============ RENDER ============ */
+/* ============ RENDER TERMINAL ============ */
 function updateHeader() {
   $('symbolPill').textContent = state.symbol;
   $('chartSymbol').textContent = state.symbol;
   $('chartTF').textContent = state.timeframe.toUpperCase();
-  
   const displayPrice = state.livePrice || state.indicators?.last;
-  
   if (displayPrice) {
     $('priceLabel').textContent = fmt(displayPrice);
     if (state.prevDisplayPrice) {
@@ -910,20 +933,10 @@ function updateHeader() {
     }
     state.prevDisplayPrice = displayPrice;
   }
-  
   if (state.indicators) {
     const ch = state.indicators.change24h;
-    const chEl = $('changeLabel');
-    chEl.textContent = fmtPct(ch);
-    chEl.style.color = ch >= 0 ? '#34d399' : '#f87171';
-    
-    const c = colorFor(state.indicators.bias);
-    const badge = $('biasBadge');
-    badge.style.background = c.bg;
-    badge.style.borderColor = c.border;
-    badge.style.color = c.text;
-    badge.querySelector('.dot').style.background = c.dot;
-    $('biasText').textContent = state.indicators.bias.replace('_',' ');
+    $('changeLabel').textContent = fmtPct(ch);
+    $('changeLabel').style.color = ch >= 0 ? '#34d399' : '#f87171';
   }
 }
 
@@ -931,18 +944,15 @@ function renderIndicators() {
   if (!state.indicators) return;
   const i = state.indicators;
   $('indTicker').textContent = state.symbol + ' · ' + state.dataSource;
-  const rsiTone = i.rsi > 60 ? 'up' : i.rsi < 40 ? 'down' : 'neutral';
-  const macdTone = i.macd.hist > 0 ? 'up' : 'down';
-  const emaTone = i.last > i.ema20 ? 'up' : 'down';
   $('indGrid').innerHTML = `
     <div>
-      <div class="ind-row"><span class="ind-label">RSI (14)</span><span class="ind-value ${rsiTone}">${i.rsi.toFixed(2)}</span></div>
-      <div class="ind-row"><span class="ind-label">MACD</span><span class="ind-value ${macdTone}">${i.macd.macd.toFixed(3)}</span></div>
+      <div class="ind-row"><span class="ind-label">RSI (14)</span><span class="ind-value ${i.rsi>60?'up':i.rsi<40?'down':'neutral'}">${i.rsi.toFixed(2)}</span></div>
+      <div class="ind-row"><span class="ind-label">MACD</span><span class="ind-value ${i.macd.hist>0?'up':'down'}">${i.macd.macd.toFixed(3)}</span></div>
       <div class="ind-row"><span class="ind-label">Signal</span><span class="ind-value">${i.macd.signal.toFixed(3)}</span></div>
-      <div class="ind-row"><span class="ind-label">Hist</span><span class="ind-value ${macdTone}">${i.macd.hist.toFixed(3)}</span></div>
+      <div class="ind-row"><span class="ind-label">Hist</span><span class="ind-value ${i.macd.hist>0?'up':'down'}">${i.macd.hist.toFixed(3)}</span></div>
     </div>
     <div>
-      <div class="ind-row"><span class="ind-label">EMA 20</span><span class="ind-value ${emaTone}">${fmt(i.ema20)}</span></div>
+      <div class="ind-row"><span class="ind-label">EMA 20</span><span class="ind-value ${i.last>i.ema20?'up':'down'}">${fmt(i.ema20)}</span></div>
       <div class="ind-row"><span class="ind-label">EMA 50</span><span class="ind-value ${i.last>i.ema50?'up':'down'}">${fmt(i.ema50)}</span></div>
       <div class="ind-row"><span class="ind-label">EMA 200</span><span class="ind-value ${i.last>i.ema200?'up':'down'}">${fmt(i.ema200)}</span></div>
       <div class="ind-row"><span class="ind-label">ATR (14)</span><span class="ind-value">${fmt(i.atr)}</span></div>
@@ -951,50 +961,27 @@ function renderIndicators() {
 }
 
 function renderProjection() {
-  const strip = $('projStrip');
-  const meta = $('projMeta');
-  if (!state.forecast?.projectedCandles) {
-    strip.innerHTML = [1,2,3,4,5].map(n =>
-      `<div class="proj-box proj-flat"><div class="proj-offset">+${n}</div><div class="proj-price">—</div><div class="proj-arrow">→</div></div>`
-    ).join('');
-    meta.textContent = 'waiting…';
-    return;
-  }
+  if (!state.forecast?.projectedCandles) return;
   const arr = state.forecast.projectedCandles.slice(0,5);
-  strip.innerHTML = arr.map(p => {
+  $('projStrip').innerHTML = arr.map(p => {
     const cls = p.predictedTrend === 'up' ? 'proj-up' : p.predictedTrend === 'down' ? 'proj-down' : 'proj-flat';
     const arrow = p.predictedTrend === 'up' ? '▲' : p.predictedTrend === 'down' ? '▼' : '→';
-    return `<div class="proj-box ${cls}">
-      <div class="proj-offset">+${p.candleOffset}</div>
-      <div class="proj-price">${fmt(p.projectedClose)}</div>
-      <div class="proj-arrow">${arrow}</div>
-    </div>`;
+    return `<div class="proj-box ${cls}"><div class="proj-offset">+${p.candleOffset}</div><div class="proj-price">${fmt(p.projectedClose)}</div><div class="proj-arrow">${arrow}</div></div>`;
   }).join('');
-  meta.textContent = `${state.forecast.bias.replace('_',' ')} · conf ${state.forecast.confidenceScore}%`;
+  $('projMeta').textContent = `${state.forecast.bias.replace('_',' ')} · conf ${state.forecast.confidenceScore}%`;
 }
 
 function renderForecast() {
-  const body = $('forecastBody');
-  if (!state.forecast) {
-    body.innerHTML = '<div class="fc-meta">Awaiting forecast…</div>';
-    return;
-  }
-  const f = state.forecast;
-  const c = colorFor(f.bias);
-  const sc = f.scenarios;
-  const sig = f.recommendedSignal;
-  const kl = f.keyLevels;
-
-  body.innerHTML = `
+  if (!state.forecast) return;
+  const f = state.forecast, c = colorFor(f.bias), sc = f.scenarios, sig = f.recommendedSignal, kl = f.keyLevels;
+  $('forecastBody').innerHTML = `
     <div class="fc-body-bias" style="color:${c.text}">${f.bias.replace('_',' ')}</div>
     <div class="fc-meta">${state.timeframe.toUpperCase()} · confidence ${f.confidenceScore}% ${state.userOverridePrice ? '<span style="color:#38bdf8">(synced)</span>' : ''}</div>
     <div class="fc-summary">${escapeHtml(f.summary)}</div>
-
     <div class="section-label">Scenarios</div>
     ${scBar('Bull', sc.bullish.probability, '#10b981', fmt(sc.bullish.targetPrice))}
     ${scBar('Base', sc.baseCase.probability, '#f59e0b', fmt(sc.baseCase.expectedRange[0])+'–'+fmt(sc.baseCase.expectedRange[1]))}
     ${scBar('Bear', sc.bearish.probability, '#ef4444', fmt(sc.bearish.targetPrice))}
-
     <div class="section-label">Key Levels</div>
     <div class="lvl-grid">
       <div class="lvl"><span style="color:#fb923c">R2</span><span>${fmt(kl.majorResistance)}</span></div>
@@ -1002,7 +989,6 @@ function renderForecast() {
       <div class="lvl"><span style="color:#34d399">S1</span><span>${fmt(kl.immediateSupport)}</span></div>
       <div class="lvl"><span style="color:#f87171">INV</span><span>${fmt(kl.criticalInvalidation)}</span></div>
     </div>
-
     <div class="section-label">Signal · ${sig.action}</div>
     <div class="signal-grid">
       <div class="sig-box"><div class="sig-label">Entry Zone</div><div class="sig-value">${fmt(sig.entryZone[0])} – ${fmt(sig.entryZone[1])}</div></div>
@@ -1018,26 +1004,16 @@ function renderForecast() {
 }
 
 function scBar(label, prob, color, target) {
-  return `<div class="sc-bar">
-    <span class="sc-label">${label}</span>
-    <div class="sc-track"><div class="sc-fill" style="width:${prob}%;background:${color}"></div></div>
-    <span class="sc-prob" style="color:${color}">${prob}%</span>
-    <span class="sc-target">${target}</span>
-  </div>`;
+  return `<div class="sc-bar"><span class="sc-label">${label}</span><div class="sc-track"><div class="sc-fill" style="width:${prob}%;background:${color}"></div></div><span class="sc-prob" style="color:${color}">${prob}%</span><span class="sc-target">${target}</span></div>`;
 }
 
 function renderNews() {
-  const body = $('newsBody');
-  if (!state.news?.length) {
-    body.innerHTML = '<div class="fc-meta">No news available</div>';
-    $('newsCount').textContent = '—';
-    return;
-  }
+  if (!state.news?.length) return;
   $('newsCount').textContent = state.news.length + ' items';
-  body.innerHTML = state.news.map(n => `
+  $('newsBody').innerHTML = state.news.map(n => `
     <div class="news-item">
       <div class="news-meta">
-        <span class="news-tag" ${sentimentTag(n.sentiment)}>${n.sentiment}</span>
+        <span class="news-tag" style="${n.sentiment==='BULLISH'?'background:rgba(16,185,129,.15);color:#34d399;border-color:rgba(16,185,129,.4)':n.sentiment==='BEARISH'?'background:rgba(239,68,68,.15);color:#f87171;border-color:rgba(239,68,68,.4)':'background:rgba(245,158,11,.15);color:#fbbf24;border-color:rgba(245,158,11,.4)'}">${n.sentiment}</span>
         <span style="color:#64748b">${escapeHtml(n.source||'')}</span>
       </div>
       <div class="news-headline">${escapeHtml(n.headline||'')}</div>
@@ -1047,25 +1023,13 @@ function renderNews() {
 }
 
 function renderWatchlist() {
-  const body = $('watchlistBody');
-  body.innerHTML = GROUPS.map(g => `
+  $('watchlistBody').innerHTML = GROUPS.map(g => `
     <div class="wl-group">
       <div class="wl-group-label">${g.name}</div>
-      ${g.keys.map(k => `
-        <button class="wl-item ${k === state.symbol ? 'active' : ''}" onclick="selectSymbol('${k}')">
-          <span>${SYMBOLS[k]?.label || k}</span>
-          ${k === state.symbol ? '<span class="dot live-dot" style="background:#34d399;width:5px;height:5px"></span>' : ''}
-        </button>
-      `).join('')}
+      ${g.keys.map(k => `<button class="wl-item ${k === state.symbol ? 'active' : ''}" onclick="selectSymbol('${k}')"><span>${SYMBOLS[k]?.label || k}</span>${k === state.symbol ? '<span class="dot live-dot" style="background:#34d399;width:5px;height:5px"></span>' : ''}</button>`).join('')}
     </div>
   `).join('');
   $('wlCount').textContent = Object.keys(SYMBOLS).length + ' instruments';
-}
-
-function renderTFButtons() {
-  $('tfGroup').innerHTML = TF_LIST.map(tf =>
-    `<button class="tf-btn ${tf === state.timeframe ? 'active' : ''}" onclick="selectTF('${tf}')">${tf.toUpperCase()}</button>`
-  ).join('');
 }
 
 /* ============ ACTIONS ============ */
@@ -1090,50 +1054,37 @@ function selectTF(tf) {
   renderTFButtons();
   mountTVChart();
   loadCandles();
-  // Footprint doesn't depend on TF (it's raw ticks), but reset aggregation
-  state.fpBuy = 0;
-  state.fpSell = 0;
-  updateFootprintUI();
+  if (state.activeTab === 'orderflow') { state.fpBuy = 0; state.fpSell = 0; updateOrderFlowUI(); }
 }
 
 function syncPricePrompt() {
   if (!state.indicators) return;
   const current = state.userOverridePrice || state.indicators.last;
-  const input = prompt(`Enter the exact price you see on your TradingView chart to sync the AI signal:\n(Current: ${fmt(current)})`, current);
+  const input = prompt(`Enter exact TradingView price to sync:\n(Current: ${fmt(current)})`, current);
   if (input) {
     const val = parseFloat(input);
-    if (Number.isFinite(val) && val > 0) {
-      state.userOverridePrice = val;
-      refreshForecast(true);
-    }
+    if (Number.isFinite(val) && val > 0) { state.userOverridePrice = val; refreshForecast(true); }
   }
 }
 
 function shareSignal() {
   if (!state.forecast) return;
-  const f = state.forecast;
-  const sig = f.recommendedSignal;
+  const f = state.forecast, sig = f.recommendedSignal;
   const text = `🟢 AlphaPulse AI · ${state.symbol} · ${state.timeframe}\n${f.bias} · Confidence ${f.confidenceScore}%\n\nEntry: ${fmt(sig.entryZone[0])} – ${fmt(sig.entryZone[1])}\nTP1: ${fmt(sig.takeProfit1)}\nTP2: ${fmt(sig.takeProfit2)}\nStop: ${fmt(sig.stopLoss)}\nR:R: ${sig.riskRewardRatio}\n\n${sig.rationale}`;
   if (navigator.share) navigator.share({ text }).catch(()=>{});
   else navigator.clipboard.writeText(text).then(()=>alert('Signal copied to clipboard')).catch(()=>{});
 }
 
-function openSettings() {
-  $('geminiKeyInput').value = localStorage.getItem(LS_KEY) || '';
-  $('settingsModal').classList.add('open');
-}
+function openSettings() { $('geminiKeyInput').value = localStorage.getItem(LS_KEY) || ''; $('settingsModal').classList.add('open'); }
 function closeSettings() { $('settingsModal').classList.remove('open'); }
 function saveKey() {
   const key = $('geminiKeyInput').value.trim();
-  if (key) localStorage.setItem(LS_KEY, key);
-  else localStorage.removeItem(LS_KEY);
-  closeSettings();
-  refreshForecast(true);
+  if (key) localStorage.setItem(LS_KEY, key); else localStorage.removeItem(LS_KEY);
+  closeSettings(); refreshForecast(true);
 }
 
 /* ============ BOOT ============ */
 function boot() {
-  renderTFButtons();
   renderWatchlist();
   mountTVChart();
   loadCandles();
@@ -1143,9 +1094,7 @@ function boot() {
   setInterval(loadCandles, 20000);
   setInterval(fetchLivePrice, 2000);
 
-  $('settingsModal').addEventListener('click', e => {
-    if (e.target.id === 'settingsModal') closeSettings();
-  });
+  $('settingsModal').addEventListener('click', e => { if (e.target.id === 'settingsModal') closeSettings(); });
 }
 
 boot();
