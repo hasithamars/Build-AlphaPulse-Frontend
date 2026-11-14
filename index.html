@@ -60,7 +60,7 @@ aside.wl{width:190px;flex-shrink:0;border-right:1px solid var(--border);overflow
 
 /* center */
 .center{flex:1;display:flex;flex-direction:column;padding:14px;gap:12px;overflow:hidden;min-width:0}
-.chart-card{display:flex;flex-direction:column;overflow:hidden;height:400px;flex-shrink:0}
+.chart-card{display:flex;flex-direction:column;overflow:hidden;height:360px;flex-shrink:0}
 .chart-header{flex-shrink:0;display:flex;justify-content:space-between;align-items:center;
   padding:8px 14px;border-bottom:1px solid var(--border);font-size:11px;font-family:'SF Mono',monospace}
 .chart-body{flex:1;position:relative;overflow:hidden}
@@ -68,31 +68,17 @@ aside.wl{width:190px;flex-shrink:0;border-right:1px solid var(--border);overflow
 .tv-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   color:var(--muted);font-size:12px;font-family:'SF Mono',monospace}
 
-/* projection strip */
-.proj-card{padding:10px 12px;flex-shrink:0}
-.proj-title{font-size:9px;letter-spacing:.2em;color:var(--muted);font-family:'SF Mono',monospace;
-  text-transform:uppercase;margin-bottom:8px;display:flex;justify-content:space-between}
-.proj-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
-.proj-box{padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:rgba(15,23,42,.6);text-align:center}
-.proj-offset{font-size:9px;color:var(--muted);font-family:'SF Mono',monospace;letter-spacing:.1em}
-.proj-price{font-size:12px;font-weight:700;font-family:'SF Mono',monospace;margin:2px 0}
-.proj-arrow{font-size:11px}
-.proj-up{color:#34d399;border-color:rgba(16,185,129,.4);background:rgba(16,185,129,.06)}
-.proj-down{color:#f87171;border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.06)}
-.proj-flat{color:#fbbf24;border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.06)}
-
-/* indicators */
-.ind-card{padding:12px;flex-shrink:0}
-.ind-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.ind-title{font-size:9px;letter-spacing:.2em;color:var(--muted);font-family:'SF Mono',monospace;text-transform:uppercase}
-.ind-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;font-size:11px;font-family:'SF Mono',monospace}
-.ind-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(51,65,85,.3)}
-.ind-row:last-child{border-bottom:none}
-.ind-label{color:var(--muted)}
-.ind-value{color:var(--dim);font-weight:600}
-.up{color:#34d399!important}
-.down{color:#f87171!important}
-.neutral{color:#fbbf24!important}
+/* footprint */
+.fp-card{padding:10px 12px;flex-shrink:0;display:flex;flex-direction:column;gap:8px}
+.fp-header{display:flex;justify-content:space-between;align-items:center}
+.fp-title{font-size:9px;letter-spacing:.2em;color:var(--muted);font-family:'SF Mono',monospace;text-transform:uppercase}
+.fp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.fp-box{padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:rgba(15,23,42,.6);text-align:center}
+.fp-label{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-family:'SF Mono',monospace}
+.fp-val{font-size:12px;font-weight:700;font-family:'SF Mono',monospace;margin-top:2px}
+.fp-up{color:#34d399}
+.fp-down{color:#f87171}
+.fp-neutral{color:#fbbf24}
 
 /* right */
 aside.right{width:340px;flex-shrink:0;border-left:1px solid var(--border);
@@ -164,14 +150,14 @@ aside.right{width:340px;flex-shrink:0;border-left:1px solid var(--border);
 @media(max-width:1100px){
   aside.right{width:280px}
   aside.wl{width:160px}
-  .chart-card{height:340px}
+  .chart-card{height:300px}
 }
 @media(max-width:768px){
   aside.wl{display:none}
   aside.right{width:100%;position:absolute;inset:auto 0 0 0;max-height:45vh;border-left:none;border-top:1px solid var(--border);z-index:20}
   .center{padding-bottom:45vh}
-  .chart-card{height:280px}
-  .proj-strip{grid-template-columns:repeat(3,1fr)}
+  .chart-card{height:240px}
+  .fp-grid{grid-template-columns:1fr 1fr}
 }
 </style>
 </head>
@@ -236,6 +222,32 @@ aside.right{width:340px;flex-shrink:0;border-left:1px solid var(--border);
         </div>
       </div>
 
+      <!-- FOOTPRINT / VOLUME DELTA PANEL -->
+      <div class="glass fp-card">
+        <div class="fp-header">
+          <div class="fp-title">Live Footprint & Order Flow</div>
+          <div class="fp-title" id="fpSource" style="color:var(--dim)">Connecting…</div>
+        </div>
+        <div class="fp-grid">
+          <div class="fp-box">
+            <div class="fp-label">Buy Volume (Aggressor)</div>
+            <div class="fp-val fp-up" id="fpBuyVol">—</div>
+          </div>
+          <div class="fp-box">
+            <div class="fp-label">Sell Volume (Aggressor)</div>
+            <div class="fp-val fp-down" id="fpSellVol">—</div>
+          </div>
+          <div class="fp-box">
+            <div class="fp-label">Volume Delta (CVD)</div>
+            <div class="fp-val" id="fpDelta">—</div>
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:6px;font-family:'SF Mono',monospace;text-align:center" id="fpStatus">
+          WebSocket disconnected.
+        </div>
+      </div>
+
+      <!-- PROJECTION STRIP -->
       <div class="glass proj-card">
         <div class="proj-title">
           <span>Next 5 Periods — AI Projection</span>
@@ -314,7 +326,6 @@ aside.right{width:340px;flex-shrink:0;border-left:1px solid var(--border);
 <script>
 /* ============ CONFIG ============ */
 const LS_KEY = 'alphapulse_gemini_key';
-// REPLACE WITH YOUR CLOUDFLARE WORKER URL:
 const PROXY = 'https://alphapulse-proxy.YOUR-SUBDOMAIN.workers.dev'; 
 
 const TF_LIST = ['1m','5m','15m','1h','4h','1d'];
@@ -364,8 +375,13 @@ const state = {
   loadingCandles: false,
   loadingForecast: false,
   dataSource: '—',
-  livePrice: null, // Used for real-time ticker
-  userOverridePrice: null, // Used for Sync button
+  livePrice: null,
+  userOverridePrice: null,
+  // Footprint state
+  ws: null,
+  fpBuy: 0,
+  fpSell: 0,
+  fpStartTime: Date.now(),
 };
 
 /* ============ HELPERS ============ */
@@ -431,9 +447,100 @@ function mountTVChart() {
   }
 }
 
+/* ============ LIVE FOOTPRINT WEBSOCKET (CRYPTO) ============ */
+function connectFootprintWS() {
+  // Close existing
+  if (state.ws) {
+    state.ws.close();
+    state.ws = null;
+  }
+
+  const meta = SYMBOLS[state.symbol];
+  if (!meta || !meta.binance) {
+    // Not a crypto symbol — footprint not available via free feed
+    $('fpSource').textContent = 'Not available for this asset class';
+    $('fpBuyVol').textContent = '—';
+    $('fpSellVol').textContent = '—';
+    $('fpDelta').textContent = '—';
+    $('fpStatus').textContent = 'Free footprint data is only available for crypto (Binance).';
+    return;
+  }
+
+  // Reset aggregation
+  state.fpBuy = 0;
+  state.fpSell = 0;
+  state.fpStartTime = Date.now();
+  updateFootprintUI();
+
+  const stream = `wss://stream.binance.com:9443/ws/${meta.binance.toLowerCase()}@aggTrade`;
+  $('fpSource').textContent = 'Binance WebSocket';
+  $('fpStatus').textContent = 'Connecting to Binance…';
+
+  try {
+    state.ws = new WebSocket(stream);
+
+    state.ws.onopen = () => {
+      $('fpStatus').textContent = 'Connected. Listening for aggregated trades…';
+      $('liveDot').style.background = '#34d399';
+      $('liveLabel').textContent = 'LIVE';
+    };
+
+    state.ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      // aggTrade payload: m = isBuyerMaker (true = sell aggressor, false = buy aggressor)
+      const qty = parseFloat(data.q);
+      const isSell = data.m; // If maker is buyer, then aggressor is seller
+
+      if (isSell) {
+        state.fpSell += qty;
+      } else {
+        state.fpBuy += qty;
+      }
+      updateFootprintUI();
+    };
+
+    state.ws.onerror = (err) => {
+      console.warn('WebSocket error:', err);
+      $('fpStatus').textContent = 'WebSocket error. Reconnecting…';
+    };
+
+    state.ws.onclose = () => {
+      $('fpStatus').textContent = 'Disconnected.';
+      $('liveDot').style.background = '#64748b';
+      $('liveLabel').textContent = 'OFFLINE';
+      // Auto-reconnect after 3s if still on a crypto symbol
+      setTimeout(() => {
+        if (SYMBOLS[state.symbol]?.binance && (!state.ws || state.ws.readyState === WebSocket.CLOSED)) {
+          connectFootprintWS();
+        }
+      }, 3000);
+    };
+  } catch (e) {
+    $('fpStatus').textContent = 'Failed to connect: ' + e.message;
+  }
+}
+
+function updateFootprintUI() {
+  const buy = state.fpBuy;
+  const sell = state.fpSell;
+  const delta = buy - sell;
+
+  $('fpBuyVol').textContent = buy > 0 ? buy.toFixed(3) : '—';
+  $('fpSellVol').textContent = sell > 0 ? sell.toFixed(3) : '—';
+
+  const dEl = $('fpDelta');
+  dEl.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(3);
+  if (delta > 0) {
+    dEl.className = 'fp-val fp-up';
+  } else if (delta < 0) {
+    dEl.className = 'fp-val fp-down';
+  } else {
+    dEl.className = 'fp-val fp-neutral';
+  }
+}
+
 /* ============ DATA FETCHERS ============ */
 async function fetchLivePrice() {
-  // Fast 2-second poll for the header price
   const meta = SYMBOLS[state.symbol];
   if (!meta) return;
   
@@ -643,7 +750,6 @@ async function refreshForecast(manual=false) {
   state.loadingForecast = true;
   if (manual) $('refreshForecastBtn').textContent = '…';
 
-  // Use the user's manual override price if they clicked "Sync"
   const basePrice = state.userOverridePrice || state.indicators.last;
 
   if (!apiKey) {
@@ -794,12 +900,10 @@ function updateHeader() {
   $('chartSymbol').textContent = state.symbol;
   $('chartTF').textContent = state.timeframe.toUpperCase();
   
-  // Use livePrice if we have it (real-time ticker), otherwise fallback to last candle
   const displayPrice = state.livePrice || state.indicators?.last;
   
   if (displayPrice) {
     $('priceLabel').textContent = fmt(displayPrice);
-    // Flash color on tick
     if (state.prevDisplayPrice) {
       $('priceLabel').style.color = displayPrice > state.prevDisplayPrice ? '#34d399' : displayPrice < state.prevDisplayPrice ? '#f87171' : '#f1f5f9';
       setTimeout(() => { $('priceLabel').style.color = '#f1f5f9'; }, 300);
@@ -977,6 +1081,7 @@ function selectSymbol(sym) {
   mountTVChart();
   loadCandles();
   fetchLivePrice();
+  connectFootprintWS();
 }
 
 function selectTF(tf) {
@@ -985,6 +1090,10 @@ function selectTF(tf) {
   renderTFButtons();
   mountTVChart();
   loadCandles();
+  // Footprint doesn't depend on TF (it's raw ticks), but reset aggregation
+  state.fpBuy = 0;
+  state.fpSell = 0;
+  updateFootprintUI();
 }
 
 function syncPricePrompt() {
@@ -995,7 +1104,7 @@ function syncPricePrompt() {
     const val = parseFloat(input);
     if (Number.isFinite(val) && val > 0) {
       state.userOverridePrice = val;
-      refreshForecast(true); // Recalculate AI with the new base price
+      refreshForecast(true);
     }
   }
 }
@@ -1029,11 +1138,9 @@ function boot() {
   mountTVChart();
   loadCandles();
   fetchLivePrice();
+  connectFootprintWS();
 
-  // Poll full candles every 20 seconds
   setInterval(loadCandles, 20000);
-  
-  // Poll live price tick every 2 seconds (fast updates!)
   setInterval(fetchLivePrice, 2000);
 
   $('settingsModal').addEventListener('click', e => {
