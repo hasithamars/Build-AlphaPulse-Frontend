@@ -66,11 +66,12 @@ aside.wl{width:190px;flex-shrink:0;border-right:1px solid var(--border);overflow
 
 /* Terminal View */
 .center{flex:1;display:flex;flex-direction:column;padding:14px;gap:12px;overflow-y:auto;min-width:0}
-.chart-card{display:flex;flex-direction:column;overflow:hidden;height:400px;flex-shrink:0}
+.chart-card{display:flex;flex-direction:column;overflow:hidden;height:420px;flex-shrink:0}
 .chart-header{flex-shrink:0;display:flex;justify-content:space-between;align-items:center;
   padding:8px 14px;border-bottom:1px solid var(--border);font-size:11px;font-family:'SF Mono',monospace}
-.chart-body{flex:1;position:relative;overflow:hidden}
-#tv_chart{width:100%;height:100%}
+.chart-body{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+#tv_chart{width:100%;height:100%;display:none}
+#customChart{width:100%;height:100%;display:block}
 .tv-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   color:var(--muted);font-size:12px;font-family:'SF Mono',monospace}
 
@@ -264,7 +265,8 @@ aside.right{width:340px;flex-shrink:0;border-left:1px solid var(--border);
           </div>
           <div class="chart-body">
             <div id="tv_chart"></div>
-            <div class="tv-placeholder" id="tvPlaceholder">Loading TradingView chart…</div>
+            <canvas id="customChart"></canvas>
+            <div class="tv-placeholder" id="tvPlaceholder">Loading chart…</div>
           </div>
         </div>
 
@@ -463,6 +465,10 @@ const state = {
   fpSell: 0,
   cvdHistory: [],
   tradeTape: [],
+  // Deriv live ticker
+  derivPriceWs: null,
+  // Chart type
+  chartMode: 'tv', // 'tv' or 'canvas'
 };
 
 /* ============ HELPERS ============ */
@@ -486,14 +492,27 @@ function switchTab(tab) {
   if (tab === 'orderflow') resizeCVDCanvas();
 }
 
-/* ============ TRADINGVIEW WIDGET ============ */
+/* ============ CHARTS ============ */
 function mountTVChart() {
   const meta = SYMBOLS[state.symbol];
   if (!meta) return;
+  
+  if (meta.deriv) {
+    // Deriv uses Custom Canvas
+    state.chartMode = 'canvas';
+    $('tv_chart').style.display = 'none';
+    $('customChart').style.display = 'block';
+    $('tvPlaceholder').style.display = 'none';
+    drawCustomChart();
+    return;
+  }
+
+  // Traditional assets use TradingView
+  state.chartMode = 'tv';
+  $('tv_chart').style.display = 'block';
+  $('customChart').style.display = 'none';
   const container = $('tv_chart');
   const placeholder = $('tvPlaceholder');
-  if (!container) return;
-  
   container.innerHTML = '';
   placeholder.style.display = 'none';
 
@@ -514,116 +533,148 @@ function mountTVChart() {
   } catch (e) { placeholder.textContent = 'Chart unavailable'; placeholder.style.display = 'flex'; }
 }
 
-/* ============ LIVE FOOTPRINT WEBSOCKET ============ */
-function connectFootprintWS() {
-  if (state.ws) { state.ws.close(); state.ws = null; }
-  const meta = SYMBOLS[state.symbol];
-  const isCrypto = !!meta?.binance;
+function drawCustomChart() {
+  const canvas = $('customChart');
+  if (!canvas || state.chartMode !== 'canvas') return;
+  
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const W = rect.width, H = rect.height;
+  ctx.clearRect(0, 0, W, H);
 
-  $('ofSymbolTitle').textContent = `${state.symbol} Footprint`;
-  if (!isCrypto) {
-    $('ofStatus').textContent = 'Footprint data is only available for Crypto (Binance).';
-    $('ofStatus').style.color = '#fbbf24';
-    $('ofBuyVol').textContent = '—'; $('ofSellVol').textContent = '—'; $('ofDelta').textContent = '—';
-    $('tapeList').innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:11px;font-family:\'SF Mono\',monospace">No data for this asset class.</div>';
-    return;
+  if (!state.candles.length) {
+    ctx.fillStyle = 'rgba(148,163,184,.5)'; ctx.font = '12px monospace'; ctx.textAlign = 'center';
+    ctx.fillText('Loading Deriv candles...', W/2, H/2); return;
   }
 
-  $('ofStatus').style.color = '#34d399';
-  $('ofStatus').textContent = 'Connecting to Binance WebSocket…';
+  let min = Infinity, max = -Infinity;
+  for (const c of state.candles) { min = Math.min(min, c.low); max = Math.max(max, c.high); }
+  if (state.forecast?.projectedCandles) {
+    for (const p of state.forecast.projectedCandles) { min = Math.min(min, p.lowerBound); max = Math.max(max, p.upperBound); }
+  }
+  if (state.forecast?.keyLevels) {
+    const kl = state.forecast.keyLevels;
+    [kl.immediateSupport, kl.immediateResistance, kl.majorResistance, kl.criticalInvalidation].forEach(v => {
+      if (Number.isFinite(v)) { min = Math.min(min, v); max = Math.max(max, v); }
+    });
+  }
+  const span = max - min || 1;
+  min -= span * 0.06; max += span * 0.06;
 
-  state.fpBuy = 0; state.fpSell = 0; state.cvdHistory = []; state.tradeTape = [];
-  clearTape(); updateOrderFlowUI(); drawCVDChart();
+  const padL = 12, padR = 76, padT = 16, padB = 26;
+  const cw = W - padL - padR, ch = H - padT - padB;
+  const toY = p => padT + ((max - p) / (max - min)) * ch;
 
-  const stream = `wss://stream.binance.com:9443/ws/${meta.binance.toLowerCase()}@aggTrade`;
+  // Grid & Y-Axis
+  ctx.strokeStyle = 'rgba(51,65,85,0.35)'; ctx.lineWidth = 1; ctx.font = '10px monospace'; ctx.textAlign = 'left';
+  for (let i = 0; i <= 4; i++) {
+    const y = padT + (ch * i) / 4;
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
+    const price = max - ((max - min) * i) / 4;
+    ctx.fillStyle = 'rgba(148,163,184,0.7)';
+    ctx.fillText(price.toFixed(price < 1 ? 5 : 2), W - padR + 6, y + 3);
+  }
+
+  // Key Levels
+  if (state.forecast?.keyLevels) {
+    const kl = state.forecast.keyLevels;
+    const levels = [
+      { v: kl.criticalInvalidation, c: 'rgba(244,63,94,0.55)', l: 'INV' },
+      { v: kl.immediateSupport, c: 'rgba(16,185,129,0.55)', l: 'SUP' },
+      { v: kl.immediateResistance, c: 'rgba(251,146,60,0.55)', l: 'RES' },
+      { v: kl.majorResistance, c: 'rgba(251,146,60,0.35)', l: 'R2' },
+    ];
+    for (const lv of levels) {
+      if (!Number.isFinite(lv.v)) continue;
+      const y = toY(lv.v);
+      if (y < padT || y > H - padB) continue;
+      ctx.strokeStyle = lv.c; ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
+      ctx.setLineDash([]); ctx.fillStyle = lv.c; ctx.fillText(lv.l, W - padR + 6, y + 3);
+    }
+  }
+
+  const projCount = state.forecast?.projectedCandles?.length || 0;
+  const slots = state.candles.length + projCount;
+  const slotW = cw / slots;
+  const bodyW = Math.max(2, Math.min(slotW * 0.66, 12));
+
+  // Real Candles
+  state.candles.forEach((c, i) => {
+    const x = padL + i * slotW + slotW / 2;
+    const up = c.close >= c.open;
+    const yT = toY(Math.max(c.open, c.close)), yB = toY(Math.min(c.open, c.close));
+    const bh = Math.max(1, yB - yT);
+    ctx.strokeStyle = up ? 'rgba(16,185,129,0.85)' : 'rgba(244,63,94,0.85)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, toY(c.high)); ctx.lineTo(x, toY(c.low)); ctx.stroke();
+    ctx.fillStyle = up ? 'rgba(16,185,129,0.75)' : 'rgba(244,63,94,0.75)';
+    ctx.fillRect(x - bodyW / 2, yT, bodyW, bh);
+  });
+
+  // Projections
+  if (projCount) {
+    const lastC = state.candles[state.candles.length - 1];
+    const lastX = padL + (state.candles.length - 1) * slotW + slotW / 2;
+    ctx.strokeStyle = 'rgba(99,102,241,0.55)'; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(lastX, toY(lastC.close));
+    state.forecast.projectedCandles.forEach((p, i) => {
+      const x = padL + (state.candles.length + i) * slotW + slotW / 2;
+      ctx.lineTo(x, toY(p.projectedClose));
+    });
+    ctx.stroke(); ctx.setLineDash([]);
+
+    state.forecast.projectedCandles.forEach((p, i) => {
+      const x = padL + (state.candles.length + i) * slotW + slotW / 2;
+      const yU = toY(p.upperBound), yL = toY(p.lowerBound);
+      ctx.fillStyle = p.predictedTrend === 'up' ? 'rgba(16,185,129,0.10)' : 'rgba(244,63,94,0.10)';
+      ctx.fillRect(x - bodyW / 2, yU, bodyW, yL - yU);
+      ctx.strokeStyle = p.predictedTrend === 'up' ? 'rgba(16,185,129,0.55)' : 'rgba(244,63,94,0.55)';
+      ctx.setLineDash([2, 2]); ctx.strokeRect(x - bodyW / 2, yU, bodyW, yL - yU); ctx.setLineDash([]);
+    });
+  }
+
+  // Current Price Line
+  const lastPrice = state.candles[state.candles.length - 1].close;
+  const py = toY(lastPrice);
+  ctx.strokeStyle = 'rgba(56,189,248,0.65)'; ctx.setLineDash([2, 2]);
+  ctx.beginPath(); ctx.moveTo(padL, py); ctx.lineTo(W - padR, py); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(56,189,248,0.95)'; ctx.fillRect(W - padR + 2, py - 8, 68, 16);
+  ctx.fillStyle = '#0f172a'; ctx.font = 'bold 10px monospace';
+  ctx.fillText(lastPrice.toFixed(lastPrice < 1 ? 5 : 2), W - padR + 6, py + 3);
+}
+
+window.addEventListener('resize', () => {
+  if (state.chartMode === 'canvas') drawCustomChart();
+  if (state.activeTab === 'orderflow') resizeCVDCanvas();
+});
+
+/* ============ DERIV DATA ============ */
+function fetchDerivLivePrice(meta) {
+  if (state.derivPriceWs) state.derivPriceWs.close();
+  const ws = new WebSocket('wss://ws.derivws.com/websockets/v3?app_id=1089');
   
-  try {
-    state.ws = new WebSocket(stream);
-    state.ws.onopen = () => { $('ofStatus').textContent = 'Live · Connected to Binance Matching Engine'; };
-    state.ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      const qty = parseFloat(data.q); const price = parseFloat(data.p);
-      const isSell = data.m; const time = new Date(data.T).toLocaleTimeString('en-US', { hour12: false });
-
-      if (isSell) state.fpSell += qty; else state.fpBuy += qty;
-      const cvd = state.fpBuy - state.fpSell;
-      state.cvdHistory.push(cvd); if (state.cvdHistory.length > 100) state.cvdHistory.shift();
-
-      state.tradeTape.unshift({ time, price, qty, isSell });
-      if (state.tradeTape.length > 50) state.tradeTape.pop();
-
-      updateOrderFlowUI(); drawCVDChart();
-    };
-    state.ws.onerror = () => { $('ofStatus').textContent = 'WebSocket error. Reconnecting…'; $('ofStatus').style.color = '#f87171'; };
-    state.ws.onclose = () => {
-      $('ofStatus').textContent = 'Disconnected.'; $('ofStatus').style.color = '#64748b';
-      setTimeout(() => { if (state.activeTab === 'orderflow' && SYMBOLS[state.symbol]?.binance && (!state.ws || state.ws.readyState === WebSocket.CLOSED)) connectFootprintWS(); }, 3000);
-    };
-  } catch (e) { $('ofStatus').textContent = 'Failed to connect: ' + e.message; $('ofStatus').style.color = '#f87171'; }
+  ws.onopen = () => { ws.send(JSON.stringify({ ticks: meta.deriv, subscribe: 1 })); };
+  ws.onmessage = (msg) => {
+    const data = JSON.parse(msg.data);
+    if (data.tick) {
+      state.livePrice = parseFloat(data.tick.quote);
+      updateHeader();
+    }
+  };
+  state.derivPriceWs = ws;
 }
 
-function updateOrderFlowUI() {
-  const buy = state.fpBuy, sell = state.fpSell, delta = buy - sell;
-  $('ofBuyVol').textContent = buy > 0 ? buy.toFixed(2) : '0.00';
-  $('ofSellVol').textContent = sell > 0 ? sell.toFixed(2) : '0.00';
-  const dEl = $('ofDelta'); dEl.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(2);
-  dEl.className = 'of-stat-val ' + (delta > 0 ? 'up' : delta < 0 ? 'down' : 'neutral');
-
-  if (state.tradeTape.length === 0) return;
-  $('tapeList').innerHTML = state.tradeTape.map(t => `
-    <div class="tape-row ${t.isSell ? 'sell' : 'buy'}">
-      <span class="tape-time">${t.time}</span>
-      <span class="tape-price ${t.isSell ? 'tape-sell-text' : 'tape-buy-text'}">${fmt(t.price)}</span>
-      <span class="tape-size ${t.isSell ? 'tape-sell-text' : 'tape-buy-text'}">${t.qty.toFixed(3)}</span>
-    </div>
-  `).join('');
-}
-
-function clearTape() {
-  state.tradeTape = [];
-  $('tapeList').innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:11px;font-family:\'SF Mono\',monospace">Waiting for trades...</div>';
-}
-
-/* ============ CVD CANVAS CHART ============ */
-function resizeCVDCanvas() {
-  const canvas = $('cvdCanvas'); if (!canvas) return;
-  const rect = canvas.getBoundingClientRect(); const dpr = window.devicePixelRatio || 1;
-  canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
-  drawCVDChart();
-}
-
-function drawCVDChart() {
-  const canvas = $('cvdCanvas'); if (!canvas || state.activeTab !== 'orderflow') return;
-  const ctx = canvas.getContext('2d'); const W = canvas.width / (window.devicePixelRatio || 1); const H = canvas.height / (window.devicePixelRatio || 1);
-  ctx.clearRect(0, 0, W, H);
-  if (state.cvdHistory.length < 2) { ctx.fillStyle = 'rgba(148,163,184,.5)'; ctx.font = '12px monospace'; ctx.textAlign = 'center'; ctx.fillText('Waiting for trade flow data...', W/2, H/2); return; }
-
-  let min = Math.min(...state.cvdHistory); let max = Math.max(...state.cvdHistory);
-  if (min === max) { min -= 1; max += 1; }
-  const pad = (max - min) * 0.1; min -= pad; max += pad;
-
-  const toX = i => (i / (state.cvdHistory.length - 1)) * W;
-  const toY = v => H - ((v - min) / (max - min)) * H;
-
-  if (min < 0 && max > 0) { ctx.strokeStyle = 'rgba(100,116,139,.4)'; ctx.setLineDash([4,4]); ctx.beginPath(); ctx.moveTo(0, toY(0)); ctx.lineTo(W, toY(0)); ctx.stroke(); ctx.setLineDash([]); }
-
-  ctx.beginPath(); ctx.moveTo(toX(0), toY(state.cvdHistory[0]));
-  for (let i = 1; i < state.cvdHistory.length; i++) ctx.lineTo(toX(i), toY(state.cvdHistory[i]));
-  const isPositive = state.cvdHistory[state.cvdHistory.length-1] >= 0;
-  ctx.strokeStyle = isPositive ? '#34d399' : '#f87171'; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.stroke();
-  ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
-  const grad = ctx.createLinearGradient(0, 0, 0, H);
-  grad.addColorStop(0, isPositive ? 'rgba(16,185,129,.2)' : 'rgba(239,68,68,.2)'); grad.addColorStop(1, 'transparent');
-  ctx.fillStyle = grad; ctx.fill();
-}
-window.addEventListener('resize', () => { if (state.activeTab === 'orderflow') resizeCVDCanvas(); });
-
-/* ============ DERIV WEBSOCKET FETCH ============ */
 function fetchDerivCandles(symbol, tf) {
   return new Promise((resolve, reject) => {
-    const ws = new WebSocket('wss://ws.binaryws.com/websockets/v3?app_id=1089');
+    const ws = new WebSocket('wss://ws.derivws.com/websockets/v3?app_id=1089');
     const tfMap = {'1m':60, '5m':300, '15m':900, '1h':3600, '4h':14400, '1d':86400};
     const granularity = tfMap[tf] || 900;
+
+    const timeout = setTimeout(() => { ws.close(); reject(new Error('Deriv API timeout')); }, 8000);
 
     ws.onopen = () => {
       ws.send(JSON.stringify({
@@ -633,21 +684,20 @@ function fetchDerivCandles(symbol, tf) {
 
     ws.onmessage = (msg) => {
       const data = JSON.parse(msg.data);
-      if (data.error) { ws.close(); reject(data.error.message); }
+      if (data.error) { clearTimeout(timeout); ws.close(); reject(new Error(data.error.message)); }
       else if (data.candles) {
-        ws.close();
+        clearTimeout(timeout); ws.close();
         resolve(data.candles.map(c => ({
-          time: c.epoch, open: parseFloat(c.open), high: parseFloat(c.high), low: parseFloat(c.low), close: parseFloat(c.close)
+          time: c.epoch * 1000, open: parseFloat(c.open), high: parseFloat(c.high), low: parseFloat(c.low), close: parseFloat(c.close)
         })));
       }
     };
 
-    ws.onerror = (err) => { ws.close(); reject(err); };
-    setTimeout(() => { ws.close(); reject('Timeout'); }, 10000);
+    ws.onerror = (err) => { clearTimeout(timeout); reject(err); };
   });
 }
 
-/* ============ DATA FETCHERS ============ */
+/* ============ BINANCE / YAHOO DATA ============ */
 async function fetchLivePrice() {
   const meta = SYMBOLS[state.symbol]; if (!meta) return;
   try {
@@ -691,9 +741,19 @@ async function loadCandles() {
 
     state.candles = candles.slice(-200);
     computeIndicators(); updateHeader(); renderIndicators(); renderProjection(); refreshForecast();
+    if (state.chartMode === 'canvas') drawCustomChart();
+    
   } catch (e) {
-    console.warn('candles failed:', e.message); state.dataSource = 'TV only'; state.indicators = null;
-    $('indGrid').innerHTML = '<div class="ind-row"><span class="ind-label" style="color:#fbbf24">Data blocked.</span></div>';
+    console.warn('candles failed:', e.message);
+    state.dataSource = 'Offline'; state.indicators = null;
+    $('indGrid').innerHTML = '<div class="ind-row"><span class="ind-label" style="color:#fbbf24">Data feed unavailable. Please try a different symbol.</span></div>';
+    if (state.chartMode === 'canvas') {
+      const ctx = $('customChart').getContext('2d');
+      const rect = $('customChart').getBoundingClientRect();
+      ctx.clearRect(0, 0, rect.width, rect.height);
+      ctx.fillStyle = 'rgba(248,113,113,.7)'; ctx.font = '12px monospace'; ctx.textAlign = 'center';
+      ctx.fillText('Failed to load Deriv data. Check connection.', rect.width/2, rect.height/2);
+    }
   } finally { state.loadingCandles = false; }
 }
 
@@ -721,13 +781,15 @@ async function refreshForecast(manual=false) {
   if (!apiKey) {
     state.forecast = algorithmicForecast(basePrice); state.news = state.forecast.newsCatalysts;
     state.loadingForecast = false; if (manual) $('refreshForecastBtn').textContent = '↻';
-    renderForecast(); renderNews(); renderProjection(); return;
+    renderForecast(); renderNews(); renderProjection();
+    if (state.chartMode === 'canvas') drawCustomChart();
+    return;
   }
 
   try {
     const meta = SYMBOLS[state.symbol];
     const isCrypto = !!meta.binance;
-    const currentCVD = isCrypto ? (state.fpBuy - state.fpSell).toFixed(2) : 'N/A (Not available for this asset)';
+    const currentCVD = isCrypto ? (state.fpBuy - state.fpSell).toFixed(2) : 'N/A (Not available)';
     
     const prompt = `You are an adaptive Quantitative Strategy Engine. Analyze ${state.symbol} (${meta.label}) on ${state.timeframe}.
 Current Price: ${basePrice}, RSI: ${state.indicators.rsi.toFixed(2)}, MACD: ${state.indicators.macd.hist.toFixed(4)}, ATR: ${state.indicators.atr.toFixed(4)}.
@@ -752,6 +814,7 @@ Return ONLY valid JSON:
   } finally {
     state.loadingForecast = false; if (manual) $('refreshForecastBtn').textContent = '↻';
     renderForecast(); renderNews(); renderProjection();
+    if (state.chartMode === 'canvas') drawCustomChart();
   }
 }
 
@@ -883,12 +946,21 @@ function renderWatchlist() {
 /* ============ ACTIONS ============ */
 function selectSymbol(sym) {
   if (!SYMBOLS[sym]) return;
+  
+  // Clear Deriv ticker
+  if (state.derivPriceWs) { state.derivPriceWs.close(); state.derivPriceWs = null; }
+  
   state.symbol = sym; state.forecast = null; state.news = []; state.indicators = null; state.livePrice = null; state.userOverridePrice = null;
   renderWatchlist(); mountTVChart(); loadCandles(); fetchLivePrice(); connectFootprintWS();
+  
+  const meta = SYMBOLS[sym];
+  if (meta.deriv) {
+    fetchDerivLivePrice(meta);
+  }
 }
 
 function selectTF(tf) {
-  state.timeframe = tf; state.forecast = null; renderTFButtons(); mountTVChart(); loadCandles();
+  state.timeframe = tf; state.forecast = null; mountTVChart(); loadCandles();
 }
 
 function syncPricePrompt() {
@@ -910,11 +982,121 @@ function openSettings() { $('geminiKeyInput').value = localStorage.getItem(LS_KE
 function closeSettings() { $('settingsModal').classList.remove('open'); }
 function saveKey() { const key = $('geminiKeyInput').value.trim(); if (key) localStorage.setItem(LS_KEY, key); else localStorage.removeItem(LS_KEY); closeSettings(); refreshForecast(true); }
 
+/* ============ ORDER FLOW / WEBSOCKET ============ */
+function connectFootprintWS() {
+  if (state.ws) { state.ws.close(); state.ws = null; }
+  const meta = SYMBOLS[state.symbol];
+  const isCrypto = !!meta?.binance;
+
+  $('ofSymbolTitle').textContent = `${state.symbol} Footprint`;
+  if (!isCrypto) {
+    $('ofStatus').textContent = 'Footprint data is only available for Crypto (Binance).';
+    $('ofStatus').style.color = '#fbbf24';
+    $('ofBuyVol').textContent = '—'; $('ofSellVol').textContent = '—'; $('ofDelta').textContent = '—';
+    $('tapeList').innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:11px;font-family:\'SF Mono\',monospace">No data for this asset class.</div>';
+    return;
+  }
+
+  $('ofStatus').style.color = '#34d399';
+  $('ofStatus').textContent = 'Connecting to Binance WebSocket…';
+
+  state.fpBuy = 0; state.fpSell = 0; state.cvdHistory = []; state.tradeTape = [];
+  clearTape(); updateOrderFlowUI(); drawCVDChart();
+
+  const stream = `wss://stream.binance.com:9443/ws/${meta.binance.toLowerCase()}@aggTrade`;
+  
+  try {
+    state.ws = new WebSocket(stream);
+    state.ws.onopen = () => { $('ofStatus').textContent = 'Live · Connected to Binance Matching Engine'; };
+    state.ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      const qty = parseFloat(data.q); const price = parseFloat(data.p);
+      const isSell = data.m; const time = new Date(data.T).toLocaleTimeString('en-US', { hour12: false });
+
+      if (isSell) state.fpSell += qty; else state.fpBuy += qty;
+      const cvd = state.fpBuy - state.fpSell;
+      state.cvdHistory.push(cvd); if (state.cvdHistory.length > 100) state.cvdHistory.shift();
+
+      state.tradeTape.unshift({ time, price, qty, isSell });
+      if (state.tradeTape.length > 50) state.tradeTape.pop();
+
+      updateOrderFlowUI(); drawCVDChart();
+    };
+    state.ws.onerror = () => { $('ofStatus').textContent = 'WebSocket error. Reconnecting…'; $('ofStatus').style.color = '#f87171'; };
+    state.ws.onclose = () => {
+      $('ofStatus').textContent = 'Disconnected.'; $('ofStatus').style.color = '#64748b';
+      setTimeout(() => { if (state.activeTab === 'orderflow' && SYMBOLS[state.symbol]?.binance && (!state.ws || state.ws.readyState === WebSocket.CLOSED)) connectFootprintWS(); }, 3000);
+    };
+  } catch (e) { $('ofStatus').textContent = 'Failed to connect: ' + e.message; $('ofStatus').style.color = '#f87171'; }
+}
+
+function updateOrderFlowUI() {
+  const buy = state.fpBuy, sell = state.fpSell, delta = buy - sell;
+  $('ofBuyVol').textContent = buy > 0 ? buy.toFixed(2) : '0.00';
+  $('ofSellVol').textContent = sell > 0 ? sell.toFixed(2) : '0.00';
+  const dEl = $('ofDelta'); dEl.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(2);
+  dEl.className = 'of-stat-val ' + (delta > 0 ? 'up' : delta < 0 ? 'down' : 'neutral');
+
+  if (state.tradeTape.length === 0) return;
+  $('tapeList').innerHTML = state.tradeTape.map(t => `
+    <div class="tape-row ${t.isSell ? 'sell' : 'buy'}">
+      <span class="tape-time">${t.time}</span>
+      <span class="tape-price ${t.isSell ? 'tape-sell-text' : 'tape-buy-text'}">${fmt(t.price)}</span>
+      <span class="tape-size ${t.isSell ? 'tape-sell-text' : 'tape-buy-text'}">${t.qty.toFixed(3)}</span>
+    </div>
+  `).join('');
+}
+
+function clearTape() {
+  state.tradeTape = [];
+  $('tapeList').innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:11px;font-family:\'SF Mono\',monospace">Waiting for trades...</div>';
+}
+
+function resizeCVDCanvas() {
+  const canvas = $('cvdCanvas'); if (!canvas) return;
+  const rect = canvas.getBoundingClientRect(); const dpr = window.devicePixelRatio || 1;
+  canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
+  drawCVDChart();
+}
+
+function drawCVDChart() {
+  const canvas = $('cvdCanvas'); if (!canvas || state.activeTab !== 'orderflow') return;
+  const ctx = canvas.getContext('2d'); const W = canvas.width / (window.devicePixelRatio || 1); const H = canvas.height / (window.devicePixelRatio || 1);
+  ctx.clearRect(0, 0, W, H);
+  if (state.cvdHistory.length < 2) { ctx.fillStyle = 'rgba(148,163,184,.5)'; ctx.font = '12px monospace'; ctx.textAlign = 'center'; ctx.fillText('Waiting for trade flow data...', W/2, H/2); return; }
+
+  let min = Math.min(...state.cvdHistory); let max = Math.max(...state.cvdHistory);
+  if (min === max) { min -= 1; max += 1; }
+  const pad = (max - min) * 0.1; min -= pad; max += pad;
+
+  const toX = i => (i / (state.cvdHistory.length - 1)) * W;
+  const toY = v => H - ((v - min) / (max - min)) * H;
+
+  if (min < 0 && max > 0) { ctx.strokeStyle = 'rgba(100,116,139,.4)'; ctx.setLineDash([4,4]); ctx.beginPath(); ctx.moveTo(0, toY(0)); ctx.lineTo(W, toY(0)); ctx.stroke(); ctx.setLineDash([]); }
+
+  ctx.beginPath(); ctx.moveTo(toX(0), toY(state.cvdHistory[0]));
+  for (let i = 1; i < state.cvdHistory.length; i++) ctx.lineTo(toX(i), toY(state.cvdHistory[i]));
+  const isPositive = state.cvdHistory[state.cvdHistory.length-1] >= 0;
+  ctx.strokeStyle = isPositive ? '#34d399' : '#f87171'; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.stroke();
+  ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, isPositive ? 'rgba(16,185,129,.2)' : 'rgba(239,68,68,.2)'); grad.addColorStop(1, 'transparent');
+  ctx.fillStyle = grad; ctx.fill();
+}
+
+window.addEventListener('resize', () => { if (state.activeTab === 'orderflow') resizeCVDCanvas(); if (state.chartMode === 'canvas') drawCustomChart(); });
+
 /* ============ BOOT ============ */
 function boot() {
   renderWatchlist(); mountTVChart(); loadCandles(); fetchLivePrice(); connectFootprintWS();
+  
+  // Initialize Deriv price if active
+  const meta = SYMBOLS[state.symbol];
+  if (meta.deriv) fetchDerivLivePrice(meta);
+
   setInterval(loadCandles, 20000);
   setInterval(fetchLivePrice, 2000);
+  
   $('settingsModal').addEventListener('click', e => { if (e.target.id === 'settingsModal') closeSettings(); });
 }
 
