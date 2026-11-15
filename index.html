@@ -126,7 +126,6 @@ aside.right{width:340px;flex-shrink:0;border-left:1px solid var(--border);
   font-family:'SF Mono',monospace;text-transform:uppercase;transition:background .15s;margin-top:8px}
 .btn-primary{background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.4);color:#a5b4fc}
 .btn-primary:hover{background:rgba(99,102,241,.25)}
-.btn-primary:disabled{opacity:.5;cursor:not-allowed}
 .btn-sync{background:rgba(56,189,248,.15);border:1px solid rgba(56,189,248,.4);color:#38bdf8}
 .btn-sync:hover{background:rgba(56,189,248,.25)}
 
@@ -222,7 +221,6 @@ aside.right{width:340px;flex-shrink:0;border-left:1px solid var(--border);
       </div>
     </div>
     
-    <!-- TAB SWITCHER -->
     <div class="tab-nav">
       <button class="tab-btn active" id="tabTerminal" onclick="switchTab('terminal')">📊 Terminal</button>
       <button class="tab-btn" id="tabOrderFlow" onclick="switchTab('orderflow')">⚡ Order Flow (Footprint)</button>
@@ -241,7 +239,6 @@ aside.right{width:340px;flex-shrink:0;border-left:1px solid var(--border);
   </header>
 
   <main>
-    <!-- LEFT WATCHLIST (Always visible) -->
     <aside class="wl">
       <div class="wl-header">
         <div class="wl-title">Watchlist</div>
@@ -250,7 +247,6 @@ aside.right{width:340px;flex-shrink:0;border-left:1px solid var(--border);
       <div id="watchlistBody"></div>
     </aside>
 
-    <!-- VIEW 1: TERMINAL -->
     <div class="view" id="terminal-view">
       <section class="center">
         <div class="glass chart-card">
@@ -326,7 +322,6 @@ aside.right{width:340px;flex-shrink:0;border-left:1px solid var(--border);
       </aside>
     </div>
 
-    <!-- VIEW 2: ORDER FLOW (FOOTPRINT) -->
     <div class="view hidden" id="orderflow-view">
       <div class="of-header">
         <div>
@@ -370,7 +365,6 @@ aside.right{width:340px;flex-shrink:0;border-left:1px solid var(--border);
             <div class="dot live-dot" style="background:#34d399"></div>
           </div>
           <div class="of-tape-list" id="tapeList">
-            <!-- Trades will populate here -->
             <div style="text-align:center;padding:20px;color:var(--muted);font-size:11px;font-family:'SF Mono',monospace">Waiting for trades...</div>
           </div>
         </div>
@@ -431,9 +425,18 @@ const SYMBOLS = {
   'MSFT':     { yahoo:'MSFT',    tv:'NASDAQ:MSFT',    label:'MSFT' },
   'US500':    { yahoo:'^GSPC',   tv:'FOREXCOM:SPXUSD',label:'S&P 500' },
   'US100':    { yahoo:'^IXIC',   tv:'FOREXCOM:NSXUSD',label:'Nasdaq 100' },
+  // Deriv Volatility Indices
+  'R_100':    { deriv:'R_100',   tv:'DERIV:R_100',    label:'Volatility 100' },
+  'R_75':     { deriv:'R_75',    tv:'DERIV:R_75',     label:'Volatility 75' },
+  'R_50':     { deriv:'R_50',    tv:'DERIV:R_50',     label:'Volatility 50' },
+  'R_25':     { deriv:'R_25',    tv:'DERIV:R_25',     label:'Volatility 25' },
+  'R_10':     { deriv:'R_10',    tv:'DERIV:R_10',     label:'Volatility 10' },
+  'BOOM1000': { deriv:'BOOM1000',tv:'DERIV:BOOM1000', label:'Boom 1000' },
+  'CRASH1000':{ deriv:'CRASH1000',tv:'DERIV:CRASH1000',label:'Crash 1000' },
 };
 
 const GROUPS = [
+  { name:'Deriv Synthetics', keys:['R_100','R_75','R_50','R_25','R_10','BOOM1000','CRASH1000'] },
   { name:'Crypto', keys:['BTC/USDT','ETH/USDT','SOL/USDT','XRP/USDT','DOGE/USDT','BNB/USDT','ADA/USDT','AVAX/USDT','LINK/USDT','SUI/USDT'] },
   { name:'Metals & FX', keys:['XAUUSD','XAGUSD','WTI','EUR/USD','GBP/USD','USD/JPY'] },
   { name:'Equities', keys:['NVDA','AAPL','TSLA','MSFT'] },
@@ -478,13 +481,9 @@ function switchTab(tab) {
   state.activeTab = tab;
   $('tabTerminal').classList.toggle('active', tab === 'terminal');
   $('tabOrderFlow').classList.toggle('active', tab === 'orderflow');
-  
   $('terminal-view').classList.toggle('hidden', tab !== 'terminal');
   $('orderflow-view').classList.toggle('hidden', tab !== 'orderflow');
-
-  if (tab === 'orderflow') {
-    resizeCVDCanvas();
-  }
+  if (tab === 'orderflow') resizeCVDCanvas();
 }
 
 /* ============ TRADINGVIEW WIDGET ============ */
@@ -506,48 +505,26 @@ function mountTVChart() {
 
   try {
     new TradingView.widget({
-      container_id: 'tv_chart',
-      autosize: true,
-      symbol: meta.tv,
-      interval: TF_TO_TV[state.timeframe],
-      timezone: 'Etc/UTC',
-      theme: 'dark',
-      style: '1',
-      locale: 'en',
-      toolbar_bg: '#020617',
-      enable_publishing: false,
-      hide_side_toolbar: false,
-      allow_symbol_change: false,
-      withdateranges: true,
-      details: false,
-      studies: ['RSI@tv-basicstudies'],
+      container_id: 'tv_chart', autosize: true, symbol: meta.tv, interval: TF_TO_TV[state.timeframe],
+      timezone: 'Etc/UTC', theme: 'dark', style: '1', locale: 'en', toolbar_bg: '#020617',
+      enable_publishing: false, hide_side_toolbar: false, allow_symbol_change: false,
+      withdateranges: true, details: false, studies: ['RSI@tv-basicstudies'],
     });
     $('chartSource').textContent = meta.tv;
-  } catch (e) {
-    console.warn('TV widget error:', e);
-    placeholder.textContent = 'Chart unavailable';
-    placeholder.style.display = 'flex';
-  }
+  } catch (e) { placeholder.textContent = 'Chart unavailable'; placeholder.style.display = 'flex'; }
 }
 
 /* ============ LIVE FOOTPRINT WEBSOCKET ============ */
 function connectFootprintWS() {
-  if (state.ws) {
-    state.ws.close();
-    state.ws = null;
-  }
-
+  if (state.ws) { state.ws.close(); state.ws = null; }
   const meta = SYMBOLS[state.symbol];
   const isCrypto = !!meta?.binance;
 
   $('ofSymbolTitle').textContent = `${state.symbol} Footprint`;
-  
   if (!isCrypto) {
-    $('ofStatus').textContent = 'Footprint data is only available for Crypto via Binance WebSocket.';
+    $('ofStatus').textContent = 'Footprint data is only available for Crypto (Binance).';
     $('ofStatus').style.color = '#fbbf24';
-    $('ofBuyVol').textContent = '—';
-    $('ofSellVol').textContent = '—';
-    $('ofDelta').textContent = '—';
+    $('ofBuyVol').textContent = '—'; $('ofSellVol').textContent = '—'; $('ofDelta').textContent = '—';
     $('tapeList').innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:11px;font-family:\'SF Mono\',monospace">No data for this asset class.</div>';
     return;
   }
@@ -555,95 +532,51 @@ function connectFootprintWS() {
   $('ofStatus').style.color = '#34d399';
   $('ofStatus').textContent = 'Connecting to Binance WebSocket…';
 
-  state.fpBuy = 0;
-  state.fpSell = 0;
-  state.cvdHistory = [];
-  state.tradeTape = [];
-  clearTape();
-  updateOrderFlowUI();
-  drawCVDChart();
+  state.fpBuy = 0; state.fpSell = 0; state.cvdHistory = []; state.tradeTape = [];
+  clearTape(); updateOrderFlowUI(); drawCVDChart();
 
   const stream = `wss://stream.binance.com:9443/ws/${meta.binance.toLowerCase()}@aggTrade`;
   
   try {
     state.ws = new WebSocket(stream);
-
-    state.ws.onopen = () => {
-      $('ofStatus').textContent = 'Live · Connected to Binance Matching Engine';
-    };
-
+    state.ws.onopen = () => { $('ofStatus').textContent = 'Live · Connected to Binance Matching Engine'; };
     state.ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      const qty = parseFloat(data.q);
-      const price = parseFloat(data.p);
-      const isSell = data.m; // true = sell aggressor, false = buy aggressor
-      const time = new Date(data.T).toLocaleTimeString('en-US', { hour12: false });
+      const qty = parseFloat(data.q); const price = parseFloat(data.p);
+      const isSell = data.m; const time = new Date(data.T).toLocaleTimeString('en-US', { hour12: false });
 
-      if (isSell) {
-        state.fpSell += qty;
-      } else {
-        state.fpBuy += qty;
-      }
-
-      // Update CVD history
+      if (isSell) state.fpSell += qty; else state.fpBuy += qty;
       const cvd = state.fpBuy - state.fpSell;
-      state.cvdHistory.push(cvd);
-      if (state.cvdHistory.length > 100) state.cvdHistory.shift();
+      state.cvdHistory.push(cvd); if (state.cvdHistory.length > 100) state.cvdHistory.shift();
 
-      // Update Tape
       state.tradeTape.unshift({ time, price, qty, isSell });
       if (state.tradeTape.length > 50) state.tradeTape.pop();
 
-      updateOrderFlowUI();
-      drawCVDChart();
+      updateOrderFlowUI(); drawCVDChart();
     };
-
-    state.ws.onerror = () => {
-      $('ofStatus').textContent = 'WebSocket error. Reconnecting…';
-      $('ofStatus').style.color = '#f87171';
-    };
-
+    state.ws.onerror = () => { $('ofStatus').textContent = 'WebSocket error. Reconnecting…'; $('ofStatus').style.color = '#f87171'; };
     state.ws.onclose = () => {
-      $('ofStatus').textContent = 'Disconnected.';
-      $('ofStatus').style.color = '#64748b';
-      setTimeout(() => {
-        if (state.activeTab === 'orderflow' && SYMBOLS[state.symbol]?.binance && (!state.ws || state.ws.readyState === WebSocket.CLOSED)) {
-          connectFootprintWS();
-        }
-      }, 3000);
+      $('ofStatus').textContent = 'Disconnected.'; $('ofStatus').style.color = '#64748b';
+      setTimeout(() => { if (state.activeTab === 'orderflow' && SYMBOLS[state.symbol]?.binance && (!state.ws || state.ws.readyState === WebSocket.CLOSED)) connectFootprintWS(); }, 3000);
     };
-  } catch (e) {
-    $('ofStatus').textContent = 'Failed to connect: ' + e.message;
-    $('ofStatus').style.color = '#f87171';
-  }
+  } catch (e) { $('ofStatus').textContent = 'Failed to connect: ' + e.message; $('ofStatus').style.color = '#f87171'; }
 }
 
 function updateOrderFlowUI() {
-  const buy = state.fpBuy;
-  const sell = state.fpSell;
-  const delta = buy - sell;
-
+  const buy = state.fpBuy, sell = state.fpSell, delta = buy - sell;
   $('ofBuyVol').textContent = buy > 0 ? buy.toFixed(2) : '0.00';
   $('ofSellVol').textContent = sell > 0 ? sell.toFixed(2) : '0.00';
-  
-  const dEl = $('ofDelta');
-  dEl.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(2);
+  const dEl = $('ofDelta'); dEl.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(2);
   dEl.className = 'of-stat-val ' + (delta > 0 ? 'up' : delta < 0 ? 'down' : 'neutral');
 
-  // Render tape
   if (state.tradeTape.length === 0) return;
-  const tapeHTML = state.tradeTape.map(t => `
+  $('tapeList').innerHTML = state.tradeTape.map(t => `
     <div class="tape-row ${t.isSell ? 'sell' : 'buy'}">
       <span class="tape-time">${t.time}</span>
       <span class="tape-price ${t.isSell ? 'tape-sell-text' : 'tape-buy-text'}">${fmt(t.price)}</span>
       <span class="tape-size ${t.isSell ? 'tape-sell-text' : 'tape-buy-text'}">${t.qty.toFixed(3)}</span>
     </div>
   `).join('');
-  
-  const list = $('tapeList');
-  const isScrolledToTop = list.scrollTop === 0;
-  list.innerHTML = tapeHTML;
-  if (isScrolledToTop) list.scrollTop = 0;
 }
 
 function clearTape() {
@@ -653,249 +586,171 @@ function clearTape() {
 
 /* ============ CVD CANVAS CHART ============ */
 function resizeCVDCanvas() {
-  const canvas = $('cvdCanvas');
-  if (!canvas) return;
-  const rect = canvas.getBoundingClientRect();
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = rect.width * dpr;
-  canvas.height = rect.height * dpr;
-  const ctx = canvas.getContext('2d');
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const canvas = $('cvdCanvas'); if (!canvas) return;
+  const rect = canvas.getBoundingClientRect(); const dpr = window.devicePixelRatio || 1;
+  canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
   drawCVDChart();
 }
 
 function drawCVDChart() {
-  const canvas = $('cvdCanvas');
-  if (!canvas || state.activeTab !== 'orderflow') return;
-  const ctx = canvas.getContext('2d');
-  const W = canvas.width / (window.devicePixelRatio || 1);
-  const H = canvas.height / (window.devicePixelRatio || 1);
-  
+  const canvas = $('cvdCanvas'); if (!canvas || state.activeTab !== 'orderflow') return;
+  const ctx = canvas.getContext('2d'); const W = canvas.width / (window.devicePixelRatio || 1); const H = canvas.height / (window.devicePixelRatio || 1);
   ctx.clearRect(0, 0, W, H);
+  if (state.cvdHistory.length < 2) { ctx.fillStyle = 'rgba(148,163,184,.5)'; ctx.font = '12px monospace'; ctx.textAlign = 'center'; ctx.fillText('Waiting for trade flow data...', W/2, H/2); return; }
 
-  if (state.cvdHistory.length < 2) {
-    ctx.fillStyle = 'rgba(148,163,184,.5)';
-    ctx.font = '12px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('Waiting for trade flow data...', W/2, H/2);
-    return;
-  }
-
-  let min = Math.min(...state.cvdHistory);
-  let max = Math.max(...state.cvdHistory);
+  let min = Math.min(...state.cvdHistory); let max = Math.max(...state.cvdHistory);
   if (min === max) { min -= 1; max += 1; }
-  const pad = (max - min) * 0.1;
-  min -= pad;
-  max += pad;
+  const pad = (max - min) * 0.1; min -= pad; max += pad;
 
   const toX = i => (i / (state.cvdHistory.length - 1)) * W;
   const toY = v => H - ((v - min) / (max - min)) * H;
 
-  // Zero line
-  if (min < 0 && max > 0) {
-    const zy = toY(0);
-    ctx.strokeStyle = 'rgba(100,116,139,.4)';
-    ctx.setLineDash([4,4]);
-    ctx.beginPath(); ctx.moveTo(0, zy); ctx.lineTo(W, zy); ctx.stroke();
-    ctx.setLineDash([]);
-  }
+  if (min < 0 && max > 0) { ctx.strokeStyle = 'rgba(100,116,139,.4)'; ctx.setLineDash([4,4]); ctx.beginPath(); ctx.moveTo(0, toY(0)); ctx.lineTo(W, toY(0)); ctx.stroke(); ctx.setLineDash([]); }
 
-  // CVD Line
-  ctx.beginPath();
-  ctx.moveTo(toX(0), toY(state.cvdHistory[0]));
-  for (let i = 1; i < state.cvdHistory.length; i++) {
-    ctx.lineTo(toX(i), toY(state.cvdHistory[i]));
-  }
-  
+  ctx.beginPath(); ctx.moveTo(toX(0), toY(state.cvdHistory[0]));
+  for (let i = 1; i < state.cvdHistory.length; i++) ctx.lineTo(toX(i), toY(state.cvdHistory[i]));
   const isPositive = state.cvdHistory[state.cvdHistory.length-1] >= 0;
-  ctx.strokeStyle = isPositive ? '#34d399' : '#f87171';
-  ctx.lineWidth = 2;
-  ctx.lineJoin = 'round';
-  ctx.stroke();
-
-  // Gradient Fill
-  ctx.lineTo(W, H);
-  ctx.lineTo(0, H);
-  ctx.closePath();
+  ctx.strokeStyle = isPositive ? '#34d399' : '#f87171'; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.stroke();
+  ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
   const grad = ctx.createLinearGradient(0, 0, 0, H);
-  grad.addColorStop(0, isPositive ? 'rgba(16,185,129,.2)' : 'rgba(239,68,68,.2)');
-  grad.addColorStop(1, 'transparent');
-  ctx.fillStyle = grad;
-  ctx.fill();
+  grad.addColorStop(0, isPositive ? 'rgba(16,185,129,.2)' : 'rgba(239,68,68,.2)'); grad.addColorStop(1, 'transparent');
+  ctx.fillStyle = grad; ctx.fill();
 }
+window.addEventListener('resize', () => { if (state.activeTab === 'orderflow') resizeCVDCanvas(); });
 
-window.addEventListener('resize', () => {
-  if (state.activeTab === 'orderflow') resizeCVDCanvas();
-});
+/* ============ DERIV WEBSOCKET FETCH ============ */
+function fetchDerivCandles(symbol, tf) {
+  return new Promise((resolve, reject) => {
+    const ws = new WebSocket('wss://ws.binaryws.com/websockets/v3?app_id=1089');
+    const tfMap = {'1m':60, '5m':300, '15m':900, '1h':3600, '4h':14400, '1d':86400};
+    const granularity = tfMap[tf] || 900;
+
+    ws.onopen = () => {
+      ws.send(JSON.stringify({
+        ticks_history: symbol, adjust_start_time: 1, count: 150, end: 'latest', granularity: granularity, style: 'candles'
+      }));
+    };
+
+    ws.onmessage = (msg) => {
+      const data = JSON.parse(msg.data);
+      if (data.error) { ws.close(); reject(data.error.message); }
+      else if (data.candles) {
+        ws.close();
+        resolve(data.candles.map(c => ({
+          time: c.epoch, open: parseFloat(c.open), high: parseFloat(c.high), low: parseFloat(c.low), close: parseFloat(c.close)
+        })));
+      }
+    };
+
+    ws.onerror = (err) => { ws.close(); reject(err); };
+    setTimeout(() => { ws.close(); reject('Timeout'); }, 10000);
+  });
+}
 
 /* ============ DATA FETCHERS ============ */
 async function fetchLivePrice() {
-  const meta = SYMBOLS[state.symbol];
-  if (!meta) return;
-  
+  const meta = SYMBOLS[state.symbol]; if (!meta) return;
   try {
     if (meta.binance) {
       const raw = `https://data-api.binance.vision/api/v3/ticker/price?symbol=${meta.binance}`;
       const r = await fetch(proxied(raw), { signal: AbortSignal.timeout(3000) });
-      if (r.ok) {
-        const j = await r.json();
-        state.livePrice = parseFloat(j.price);
-        updateHeader();
-        return;
-      }
+      if (r.ok) { state.livePrice = parseFloat((await r.json()).price); updateHeader(); return; }
     } else if (meta.yahoo) {
       const raw = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(meta.yahoo)}?interval=1m&range=1d`;
       const r = await fetch(proxied(raw), { signal: AbortSignal.timeout(3000) });
-      if (r.ok) {
-        const j = await r.json();
-        const result = j.chart?.result?.[0];
-        if (result?.meta?.regularMarketPrice) {
-          state.livePrice = result.meta.regularMarketPrice;
-          updateHeader();
-        }
-      }
+      if (r.ok) { const j = await r.json(); if (j.chart?.result?.[0]?.meta?.regularMarketPrice) { state.livePrice = j.chart.result[0].meta.regularMarketPrice; updateHeader(); } }
     }
   } catch {}
 }
 
 async function loadCandles() {
-  state.loadingCandles = true;
-  const meta = SYMBOLS[state.symbol];
-  if (!meta) { state.loadingCandles = false; return; }
-
+  state.loadingCandles = true; const meta = SYMBOLS[state.symbol]; if (!meta) { state.loadingCandles = false; return; }
   try {
     let candles;
     if (meta.binance) {
-      const binanceTF = TF_TO_BINANCE[state.timeframe];
-      const raw = `https://data-api.binance.vision/api/v3/klines?symbol=${meta.binance}&interval=${binanceTF}&limit=150`;
+      const raw = `https://data-api.binance.vision/api/v3/klines?symbol=${meta.binance}&interval=${TF_TO_BINANCE[state.timeframe]}&limit=150`;
       const r = await fetch(proxied(raw), { signal: AbortSignal.timeout(8000) });
       if (!r.ok) throw new Error('Worker failed');
-      const rows = await r.json();
       state.dataSource = 'Binance (worker)';
-      candles = rows.map(r => ({ time: r[0]/1000, open: +r[1], high: +r[2], low: +r[3], close: +r[4] }));
-    } else {
+      candles = (await r.json()).map(r => ({ time: r[0]/1000, open: +r[1], high: +r[2], low: +r[3], close: +r[4] }));
+    } else if (meta.yahoo) {
       const tfMap = {'1m':{interval:'1m',range:'1d'},'5m':{interval:'5m',range:'2d'},'15m':{interval:'15m',range:'5d'},'1h':{interval:'60m',range:'1mo'},'4h':{interval:'60m',range:'3mo'},'1d':{interval:'1d',range:'1y'}};
       const c = tfMap[state.timeframe] || tfMap['15m'];
       const raw = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(meta.yahoo)}?interval=${c.interval}&range=${c.range}`;
       const r = await fetch(proxied(raw), { signal: AbortSignal.timeout(9000) });
       if (!r.ok) throw new Error('Worker failed');
-      const j = await r.json();
-      const result = j.chart?.result?.[0];
-      if (!result?.timestamp) throw new Error('No data');
+      const j = await r.json(); const result = j.chart?.result?.[0]; if (!result?.timestamp) throw new Error('No data');
       const q = result.indicators.quote[0];
-      candles = result.timestamp.map((t, i) => q.close[i] != null ? { time: t, open: +(q.open[i]??q.close[i]), high: +(q.high[i]??q.close[i]), low: +(q.low[i]??q.close[i]), close: +q.close[i] } : null).filter(Boolean);
       state.dataSource = 'Yahoo (worker)';
+      candles = result.timestamp.map((t, i) => q.close[i] != null ? { time: t, open: +(q.open[i]??q.close[i]), high: +(q.high[i]??q.close[i]), low: +(q.low[i]??q.close[i]), close: +q.close[i] } : null).filter(Boolean);
+    } else if (meta.deriv) {
+      state.dataSource = 'Deriv WebSocket';
+      candles = await fetchDerivCandles(meta.deriv, state.timeframe);
+      if (candles.length) state.livePrice = candles[candles.length-1].close;
     }
 
     state.candles = candles.slice(-200);
-    computeIndicators();
-    updateHeader();
-    renderIndicators();
-    renderProjection();
-    refreshForecast();
+    computeIndicators(); updateHeader(); renderIndicators(); renderProjection(); refreshForecast();
   } catch (e) {
-    console.warn('candles failed:', e.message);
-    state.dataSource = 'TV only';
-    state.indicators = null;
+    console.warn('candles failed:', e.message); state.dataSource = 'TV only'; state.indicators = null;
     $('indGrid').innerHTML = '<div class="ind-row"><span class="ind-label" style="color:#fbbf24">Data blocked.</span></div>';
-  } finally {
-    state.loadingCandles = false;
-  }
+  } finally { state.loadingCandles = false; }
 }
 
 /* ============ INDICATORS ============ */
-function ema(values, period) {
-  if (values.length < period) return [];
-  const k = 2/(period+1);
-  let prev = values.slice(0, period).reduce((a,b)=>a+b,0)/period;
-  const out = [prev];
-  for (let i = period; i < values.length; i++) { prev = values[i]*k + prev*(1-k); out.push(prev); }
-  return out;
-}
-function rsi(closes, period=14) {
-  if (closes.length < period+1) return 50;
-  let g=0, l=0;
-  for (let i=1;i<=period;i++) { const d=closes[i]-closes[i-1]; if (d>=0) g+=d; else l-=d; }
-  let aG=g/period, aL=l/period;
-  for (let i=period+1;i<closes.length;i++) { const d=closes[i]-closes[i-1]; aG=(aG*(period-1)+(d>0?d:0))/period; aL=(aL*(period-1)+(d<0?-d:0))/period; }
-  return aL===0 ? 100 : 100 - 100/(1+aG/aL);
-}
-function macd(closes) {
-  const eF = ema(closes,12), eS = ema(closes,26);
-  if (!eF.length || !eS.length) return { macd:0, signal:0, hist:0 };
-  const off = eS.length - eF.length;
-  const line = eF.map((v,i)=> v - eS[i+off]);
-  const sig = ema(line,9);
-  const m = line[line.length-1], s = sig[sig.length-1] ?? m;
-  return { macd:m, signal:s, hist:m-s };
-}
-function atr(candles, period=14) {
-  if (candles.length < 2) return 0;
-  const trs = candles.map((c,i)=> i===0 ? c.high-c.low : Math.max(c.high-c.low, Math.abs(c.high-candles[i-1].close), Math.abs(c.low-candles[i-1].close)));
-  let a = trs.slice(0,period).reduce((s,v)=>s+v,0)/Math.min(period,trs.length);
-  for (let i=period;i<trs.length;i++) a=(a*(period-1)+trs[i])/period;
-  return a;
-}
+function ema(values, period) { if (values.length < period) return []; const k = 2/(period+1); let prev = values.slice(0, period).reduce((a,b)=>a+b,0)/period; const out = [prev]; for (let i = period; i < values.length; i++) { prev = values[i]*k + prev*(1-k); out.push(prev); } return out; }
+function rsi(closes, period=14) { if (closes.length < period+1) return 50; let g=0, l=0; for (let i=1;i<=period;i++) { const d=closes[i]-closes[i-1]; if (d>=0) g+=d; else l-=d; } let aG=g/period, aL=l/period; for (let i=period+1;i<closes.length;i++) { const d=closes[i]-closes[i-1]; aG=(aG*(period-1)+(d>0?d:0))/period; aL=(aL*(period-1)+(d<0?-d:0))/period; } return aL===0 ? 100 : 100 - 100/(1+aG/aL); }
+function macd(closes) { const eF = ema(closes,12), eS = ema(closes,26); if (!eF.length || !eS.length) return { macd:0, signal:0, hist:0 }; const off = eS.length - eF.length; const line = eF.map((v,i)=> v - eS[i+off]); const sig = ema(line,9); const m = line[line.length-1], s = sig[sig.length-1] ?? m; return { macd:m, signal:s, hist:m-s }; }
+function atr(candles, period=14) { if (candles.length < 2) return 0; const trs = candles.map((c,i)=> i===0 ? c.high-c.low : Math.max(c.high-c.low, Math.abs(c.high-candles[i-1].close), Math.abs(c.low-candles[i-1].close))); let a = trs.slice(0,period).reduce((s,v)=>s+v,0)/Math.min(period,trs.length); for (let i=period;i<trs.length;i++) a=(a*(period-1)+trs[i])/period; return a; }
 function computeIndicators() {
-  const closes = state.candles.map(c=>c.close);
-  if (closes.length < 30) return;
+  const closes = state.candles.map(c=>c.close); if (closes.length < 30) return;
   const e20 = ema(closes,20), e50 = ema(closes,50), e200 = ema(closes,200);
   const m = macd(closes), last = closes[closes.length-1], prev = closes[closes.length-2] ?? last;
   const rsiVal = rsi(closes,14);
   const score = (rsiVal>55?1:rsiVal<45?-1:0) + (m.hist>0?1:-1) + (last>(e20[e20.length-1]??last)?1:-1);
-  let bias = 'NEUTRAL';
-  if (score >= 2) bias = 'BUY';
-  if (score >= 3 && rsiVal > 60) bias = 'STRONG_BUY';
-  if (score <= -2) bias = 'SELL';
-  if (score <= -3 && rsiVal < 40) bias = 'STRONG_SELL';
-
-  state.indicators = {
-    rsi: rsiVal, macd: m,
-    ema20: e20[e20.length-1] ?? last, ema50: e50[e50.length-1] ?? last, ema200: e200[e200.length-1] ?? last,
-    atr: atr(state.candles,14), last, prev,
-    change24h: prev ? ((last-prev)/prev)*100 : 0, bias,
-  };
+  let bias = 'NEUTRAL'; if (score >= 2) bias = 'BUY'; if (score >= 3 && rsiVal > 60) bias = 'STRONG_BUY'; if (score <= -2) bias = 'SELL'; if (score <= -3 && rsiVal < 40) bias = 'STRONG_SELL';
+  state.indicators = { rsi: rsiVal, macd: m, ema20: e20[e20.length-1] ?? last, ema50: e50[e50.length-1] ?? last, ema200: e200[e200.length-1] ?? last, atr: atr(state.candles,14), last, prev, change24h: prev ? ((last-prev)/prev)*100 : 0, bias };
 }
 
-/* ============ FORECAST ============ */
+/* ============ AI FORECAST ============ */
 async function refreshForecast(manual=false) {
   if (state.loadingForecast || !state.indicators) return;
-  const apiKey = localStorage.getItem(LS_KEY);
-  state.loadingForecast = true;
-  if (manual) $('refreshForecastBtn').textContent = '…';
-
+  const apiKey = localStorage.getItem(LS_KEY); state.loadingForecast = true; if (manual) $('refreshForecastBtn').textContent = '…';
   const basePrice = state.userOverridePrice || state.indicators.last;
 
   if (!apiKey) {
-    state.forecast = algorithmicForecast(basePrice);
-    state.news = state.forecast.newsCatalysts;
-    state.loadingForecast = false;
-    if (manual) $('refreshForecastBtn').textContent = '↻';
-    renderForecast(); renderNews(); renderProjection();
-    return;
+    state.forecast = algorithmicForecast(basePrice); state.news = state.forecast.newsCatalysts;
+    state.loadingForecast = false; if (manual) $('refreshForecastBtn').textContent = '↻';
+    renderForecast(); renderNews(); renderProjection(); return;
   }
 
   try {
     const meta = SYMBOLS[state.symbol];
-    const prompt = `You are a world-class Quantitative Technical Analyst. Analyze ${state.symbol} (${meta.label}) on ${state.timeframe}. Price: ${basePrice}, RSI: ${state.indicators.rsi.toFixed(2)}, MACD: ${state.indicators.macd.hist.toFixed(4)}. Search the web for breaking news affecting ${state.symbol}.
+    const isCrypto = !!meta.binance;
+    const currentCVD = isCrypto ? (state.fpBuy - state.fpSell).toFixed(2) : 'N/A (Not available for this asset)';
+    
+    const prompt = `You are an adaptive Quantitative Strategy Engine. Analyze ${state.symbol} (${meta.label}) on ${state.timeframe}.
+Current Price: ${basePrice}, RSI: ${state.indicators.rsi.toFixed(2)}, MACD: ${state.indicators.macd.hist.toFixed(4)}, ATR: ${state.indicators.atr.toFixed(4)}.
+Live Cumulative Volume Delta (CVD): ${currentCVD} (Positive = Aggressive Buyers, Negative = Aggressive Sellers).
+
+INSTRUCTIONS:
+1. Dynamically select and combine the most effective trading strategy for the current market regime (Trend Following, Mean Reversion, or Breakout) using all available indicators.
+2. Check Google Search for any breaking macro news or catalysts for this specific asset.
+3. Generate a high-probability signal.
+
 Return ONLY valid JSON:
-{"bias":"STRONG_BUY"|"BUY"|"NEUTRAL"|"SELL"|"STRONG_SELL","confidenceScore":<50-98>,"summary":"<str>","scenarios":{"bullish":{"probability":<int>,"targetPrice":<num>,"timeHorizon":"<str>","catalyst":"<str>"},"baseCase":{"probability":<int>,"expectedRange":[<num>,<num>],"timeHorizon":"<str>","catalyst":"<str>"},"bearish":{"probability":<int>,"targetPrice":<num>,"timeHorizon":"<str>","catalyst":"<str>"}},"keyLevels":{"immediateResistance":<num>,"majorResistance":<num>,"immediateSupport":<num>,"criticalInvalidation":<num>},"projectedCandles":[{"candleOffset":1,"projectedClose":<num>,"upperBound":<num>,"lowerBound":<num>,"predictedTrend":"up"|"down"|"flat"},{"candleOffset":2,"projectedClose":<num>,"upperBound":<num>,"lowerBound":<num>,"predictedTrend":"up"|"down"|"flat"},{"candleOffset":3,"projectedClose":<num>,"upperBound":<num>,"lowerBound":<num>,"predictedTrend":"up"|"down"|"flat"},{"candleOffset":4,"projectedClose":<num>,"upperBound":<num>,"lowerBound":<num>,"predictedTrend":"up"|"down"|"flat"},{"candleOffset":5,"projectedClose":<num>,"upperBound":<num>,"lowerBound":<num>,"predictedTrend":"up"|"down"|"flat"}],"newsCatalysts":[{"headline":"<str>","source":"<str>","sentiment":"BULLISH"|"BEARISH"|"NEUTRAL","impactScore":<-100 to 100>,"summary":"<str>"}],"recommendedSignal":{"action":"BUY"|"STRONG_BUY"|"SELL"|"STRONG_SELL"|"HOLD","entryZone":[<num>,<num>],"takeProfit1":<num>,"takeProfit2":<num>,"stopLoss":<num>,"riskRewardRatio":"1:X.X","horizon":"<str>","rationale":"<str>"}}
-Probabilities sum to 100.`;
+{"bias":"STRONG_BUY"|"BUY"|"NEUTRAL"|"SELL"|"STRONG_SELL","confidenceScore":<50-98>,"summary":"<str>","scenarios":{"bullish":{"probability":<int>,"targetPrice":<num>,"timeHorizon":"<str>","catalyst":"<str>"},"baseCase":{"probability":<int>,"expectedRange":[<num>,<num>],"timeHorizon":"<str>","catalyst":"<str>"},"bearish":{"probability":<int>,"targetPrice":<num>,"timeHorizon":"<str>","catalyst":"<str>"}},"keyLevels":{"immediateResistance":<num>,"majorResistance":<num>,"immediateSupport":<num>,"criticalInvalidation":<num>},"projectedCandles":[{"candleOffset":1,"projectedClose":<num>,"upperBound":<num>,"lowerBound":<num>,"predictedTrend":"up"|"down"|"flat"},{"candleOffset":2,"projectedClose":<num>,"upperBound":<num>,"lowerBound":<num>,"predictedTrend":"up"|"down"|"flat"},{"candleOffset":3,"projectedClose":<num>,"upperBound":<num>,"lowerBound":<num>,"predictedTrend":"up"|"down"|"flat"},{"candleOffset":4,"projectedClose":<num>,"upperBound":<num>,"lowerBound":<num>,"predictedTrend":"up"|"down"|"flat"},{"candleOffset":5,"projectedClose":<num>,"upperBound":<num>,"lowerBound":<num>,"predictedTrend":"up"|"down"|"flat"}],"newsCatalysts":[{"headline":"<str>","source":"<str>","sentiment":"BULLISH"|"BEARISH"|"NEUTRAL","impactScore":<-100 to 100>,"summary":"<str>"}],"recommendedSignal":{"action":"BUY"|"STRONG_BUY"|"SELL"|"STRONG_SELL"|"HOLD","entryZone":[<num>,<num>],"takeProfit1":<num>,"takeProfit2":<num>,"stopLoss":<num>,"riskRewardRatio":"1:X.X","horizon":"<str>","rationale":"<str>"}}`;
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{parts:[{text:prompt}]}], tools:[{googleSearch:{}}], generationConfig:{temperature:0.2} }) });
     if (!r.ok) throw new Error('Gemini failed');
-    const j = await r.json();
-    const text = j.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const text = (await r.json()).candidates?.[0]?.content?.parts?.[0]?.text || '';
     const cleaned = text.replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
-    state.forecast = JSON.parse(cleaned.match(/\{[\s\S]*\}/)[0]);
-    state.news = state.forecast.newsCatalysts || [];
+    state.forecast = JSON.parse(cleaned.match(/\{[\s\S]*\}/)[0]); state.news = state.forecast.newsCatalysts || [];
   } catch (e) {
-    state.forecast = algorithmicForecast(basePrice);
-    state.news = state.forecast.newsCatalysts;
+    state.forecast = algorithmicForecast(basePrice); state.news = state.forecast.newsCatalysts;
   } finally {
-    state.loadingForecast = false;
-    if (manual) $('refreshForecastBtn').textContent = '↻';
+    state.loadingForecast = false; if (manual) $('refreshForecastBtn').textContent = '↻';
     renderForecast(); renderNews(); renderProjection();
   }
 }
@@ -907,11 +762,7 @@ function algorithmicForecast(price) {
   return {
     bias, confidenceScore: 72,
     summary: `${state.symbol} ${state.timeframe}: RSI ${ind.rsi.toFixed(1)}, MACD ${ind.macd.hist>0?'bullish':'bearish'}, price ${price>ind.ema20?'above':'below'} EMA20. ${isBull?'Momentum favors continuation.':'Pressure favors retest of support.'} (Algorithmic)`,
-    scenarios: {
-      bullish: { probability: isBull?62:28, targetPrice: bullT, timeHorizon:'2-4h', catalyst:'Breakout above resistance' },
-      baseCase: { probability: 25, expectedRange:[+(price-delta*0.4).toFixed(4), +(price+delta*0.5).toFixed(4)], timeHorizon:'1-3h', catalyst:'Consolidation' },
-      bearish: { probability: isBull?13:47, targetPrice: bearT, timeHorizon:'3-6h', catalyst:'Failure to hold support' }
-    },
+    scenarios: { bullish: { probability: isBull?62:28, targetPrice: bullT, timeHorizon:'2-4h', catalyst:'Breakout above resistance' }, baseCase: { probability: 25, expectedRange:[+(price-delta*0.4).toFixed(4), +(price+delta*0.5).toFixed(4)], timeHorizon:'1-3h', catalyst:'Consolidation' }, bearish: { probability: isBull?13:47, targetPrice: bearT, timeHorizon:'3-6h', catalyst:'Failure to hold support' } },
     keyLevels: { immediateResistance:+(price+delta*0.7).toFixed(4), majorResistance:+(price+delta*1.6).toFixed(4), immediateSupport:+(price-delta*0.6).toFixed(4), criticalInvalidation:+(price-delta*1.4).toFixed(4) },
     projectedCandles: Array.from({length:5}, (_,i) => ({ candleOffset:i+1, projectedClose:+(price+(isBull?step*(i+1):-step*(i+1))).toFixed(4), upperBound:+(price+delta*(0.5+i*0.2)).toFixed(4), lowerBound:+(price-delta*(0.3+i*0.2)).toFixed(4), predictedTrend:isBull?'up':'down' })),
     newsCatalysts: [{ headline:'Algorithmic model active', source:'AlphaPulse', sentiment:isBull?'BULLISH':'BEARISH', impactScore:0, summary:'Add Gemini key for AI news.' }],
@@ -919,7 +770,7 @@ function algorithmicForecast(price) {
   };
 }
 
-/* ============ RENDER TERMINAL ============ */
+/* ============ RENDER ============ */
 function updateHeader() {
   $('symbolPill').textContent = state.symbol;
   $('chartSymbol').textContent = state.symbol;
@@ -962,8 +813,7 @@ function renderIndicators() {
 
 function renderProjection() {
   if (!state.forecast?.projectedCandles) return;
-  const arr = state.forecast.projectedCandles.slice(0,5);
-  $('projStrip').innerHTML = arr.map(p => {
+  $('projStrip').innerHTML = state.forecast.projectedCandles.slice(0,5).map(p => {
     const cls = p.predictedTrend === 'up' ? 'proj-up' : p.predictedTrend === 'down' ? 'proj-down' : 'proj-flat';
     const arrow = p.predictedTrend === 'up' ? '▲' : p.predictedTrend === 'down' ? '▼' : '→';
     return `<div class="proj-box ${cls}"><div class="proj-offset">+${p.candleOffset}</div><div class="proj-price">${fmt(p.projectedClose)}</div><div class="proj-arrow">${arrow}</div></div>`;
@@ -1003,9 +853,7 @@ function renderForecast() {
   `;
 }
 
-function scBar(label, prob, color, target) {
-  return `<div class="sc-bar"><span class="sc-label">${label}</span><div class="sc-track"><div class="sc-fill" style="width:${prob}%;background:${color}"></div></div><span class="sc-prob" style="color:${color}">${prob}%</span><span class="sc-target">${target}</span></div>`;
-}
+function scBar(label, prob, color, target) { return `<div class="sc-bar"><span class="sc-label">${label}</span><div class="sc-track"><div class="sc-fill" style="width:${prob}%;background:${color}"></div></div><span class="sc-prob" style="color:${color}">${prob}%</span><span class="sc-target">${target}</span></div>`; }
 
 function renderNews() {
   if (!state.news?.length) return;
@@ -1035,36 +883,19 @@ function renderWatchlist() {
 /* ============ ACTIONS ============ */
 function selectSymbol(sym) {
   if (!SYMBOLS[sym]) return;
-  state.symbol = sym;
-  state.forecast = null;
-  state.news = [];
-  state.indicators = null;
-  state.livePrice = null;
-  state.userOverridePrice = null;
-  renderWatchlist();
-  mountTVChart();
-  loadCandles();
-  fetchLivePrice();
-  connectFootprintWS();
+  state.symbol = sym; state.forecast = null; state.news = []; state.indicators = null; state.livePrice = null; state.userOverridePrice = null;
+  renderWatchlist(); mountTVChart(); loadCandles(); fetchLivePrice(); connectFootprintWS();
 }
 
 function selectTF(tf) {
-  state.timeframe = tf;
-  state.forecast = null;
-  renderTFButtons();
-  mountTVChart();
-  loadCandles();
-  if (state.activeTab === 'orderflow') { state.fpBuy = 0; state.fpSell = 0; updateOrderFlowUI(); }
+  state.timeframe = tf; state.forecast = null; renderTFButtons(); mountTVChart(); loadCandles();
 }
 
 function syncPricePrompt() {
   if (!state.indicators) return;
   const current = state.userOverridePrice || state.indicators.last;
   const input = prompt(`Enter exact TradingView price to sync:\n(Current: ${fmt(current)})`, current);
-  if (input) {
-    const val = parseFloat(input);
-    if (Number.isFinite(val) && val > 0) { state.userOverridePrice = val; refreshForecast(true); }
-  }
+  if (input) { const val = parseFloat(input); if (Number.isFinite(val) && val > 0) { state.userOverridePrice = val; refreshForecast(true); } }
 }
 
 function shareSignal() {
@@ -1077,23 +908,13 @@ function shareSignal() {
 
 function openSettings() { $('geminiKeyInput').value = localStorage.getItem(LS_KEY) || ''; $('settingsModal').classList.add('open'); }
 function closeSettings() { $('settingsModal').classList.remove('open'); }
-function saveKey() {
-  const key = $('geminiKeyInput').value.trim();
-  if (key) localStorage.setItem(LS_KEY, key); else localStorage.removeItem(LS_KEY);
-  closeSettings(); refreshForecast(true);
-}
+function saveKey() { const key = $('geminiKeyInput').value.trim(); if (key) localStorage.setItem(LS_KEY, key); else localStorage.removeItem(LS_KEY); closeSettings(); refreshForecast(true); }
 
 /* ============ BOOT ============ */
 function boot() {
-  renderWatchlist();
-  mountTVChart();
-  loadCandles();
-  fetchLivePrice();
-  connectFootprintWS();
-
+  renderWatchlist(); mountTVChart(); loadCandles(); fetchLivePrice(); connectFootprintWS();
   setInterval(loadCandles, 20000);
   setInterval(fetchLivePrice, 2000);
-
   $('settingsModal').addEventListener('click', e => { if (e.target.id === 'settingsModal') closeSettings(); });
 }
 
